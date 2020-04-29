@@ -31,7 +31,8 @@ namespace DevSilenceKeeperBot
 
         private async void OnMessage(object sender, MessageEventArgs e)
         {
-            if(string.IsNullOrEmpty(e.Message.Text))
+            bool isDeletedMessage = false;
+            if (string.IsNullOrEmpty(e.Message.Text))
             {
                 return;
             }
@@ -42,21 +43,24 @@ namespace DevSilenceKeeperBot
                 Console.WriteLine($"{GetUserFullName(e.Message.From)} запросил команду: {e.Message.Text}");
                 replyMessage = await GetCommandResponse(e.Message);
             }
-            else if (IsContainsForbiddenWord(e.Message.Text))
+            else if (IsContainsForbiddenWord(e.Message))
             {
                 if (!await IsAdmin(e.Message.From, e.Message.Chat.Id))
                 {
                     replyMessage = $"Пользователь {GetUserFullName(e.Message.From)} нарушил второе правило чата!";
                     DateTime until = DateTime.Now.AddSeconds(31);
                     await _bot.KickChatMemberAsync(
-                        chatId: e.Message.Chat.Id, 
-                        userId: e.Message.From.Id, 
+                        chatId: e.Message.Chat.Id,
+                        userId: e.Message.From.Id,
                         untilDate: until);
                 }
                 else
                 {
                     replyMessage = $"Модератор {GetUserFullName(e.Message.From)} нарушает второе правило чата!";
                 }
+
+                await _bot.DeleteMessageAsync(e.Message.Chat.Id, e.Message.MessageId);
+                isDeletedMessage = true;
             }
 
             if (!string.IsNullOrEmpty(replyMessage))
@@ -66,11 +70,11 @@ namespace DevSilenceKeeperBot
                     await _bot.SendTextMessageAsync(
                         chatId: e.Message.Chat.Id,
                         text: replyMessage,
-                        replyToMessageId: e.Message.MessageId);
+                        replyToMessageId: isDeletedMessage ? default : e.Message.MessageId);
 
                     Console.WriteLine(replyMessage);
                 }
-                catch(ApiRequestException)
+                catch (ApiRequestException)
                 {
                     replyMessage = "Мышь успела удалить сообщение для reply\n(╯ರ ~ ರ)╯︵ ┻━┻.";
                     await _bot.SendTextMessageAsync(
@@ -100,13 +104,13 @@ namespace DevSilenceKeeperBot
                     response = $"Cтроки-шаблоны в банлисте:\n{templates}";
                     break;
                 case "add":
-                    if(!await IsAdmin(message.From, message.Chat.Id))
+                    if (!await IsAdmin(message.From, message.Chat.Id))
                     {
                         response = "Добавлять строки-шаблоны могут только модераторы!";
                         break;
                     }
 
-                    if (string.IsNullOrWhiteSpace(args) ||  args.Length < 4)
+                    if (string.IsNullOrWhiteSpace(args) || args.Length < 4)
                     {
                         response = "Строка-шаблон должна состоять минимум из 4ех символов!";
                         break;
@@ -165,12 +169,24 @@ namespace DevSilenceKeeperBot
 
             return response;
         }
-        private bool IsContainsForbiddenWord(string text)
+        private bool IsContainsForbiddenWord(Message message)
         {
-            if (string.IsNullOrEmpty(text))
+
+            if (string.IsNullOrEmpty(message.Text))
                 return false;
 
-            return _forbiddenWords.Any(word => text.Contains(word));
+            if (message.Entities != null)
+            {
+                foreach (var entity in message.Entities)
+                {
+                    if (_forbiddenWords.Any(word => entity.Url.Contains(word)))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return _forbiddenWords.Any(word => message.Text.Contains(word));
         }
         private async Task<bool> IsAdmin(User sender, long chatId)
         {
