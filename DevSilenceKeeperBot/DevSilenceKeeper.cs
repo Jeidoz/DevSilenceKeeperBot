@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
@@ -41,22 +40,17 @@ namespace DevSilenceKeeperBot
             if (IsCommand(e.Message.Text))
             {
                 Console.WriteLine($"{GetUserFullName(e.Message.From)} запросил команду: {e.Message.Text}");
-                replyMessage = await GetCommandResponse(e.Message);
+                replyMessage = await ProcessCommand(e.Message);
             }
             else if (IsContainsForbiddenWord(e.Message))
             {
-                if (!await IsAdmin(e.Message.From, e.Message.Chat.Id))
+                if (await IsAdmin(e.Message.From, e.Message.Chat.Id))
                 {
-                    replyMessage = $"Пользователь {GetUserFullName(e.Message.From)} нарушил второе правило чата!";
-                    DateTime until = DateTime.Now.AddSeconds(31);
-                    await _bot.KickChatMemberAsync(
-                        chatId: e.Message.Chat.Id,
-                        userId: e.Message.From.Id,
-                        untilDate: until);
+                    replyMessage = $"Модератор {GetUserFullName(e.Message.From)} нарушает второе правило чата!";
                 }
                 else
                 {
-                    replyMessage = $"Модератор {GetUserFullName(e.Message.From)} нарушает второе правило чата!";
+                    replyMessage = await KickChatMember(e.Message);
                 }
 
                 await _bot.DeleteMessageAsync(e.Message.Chat.Id, e.Message.MessageId);
@@ -87,7 +81,7 @@ namespace DevSilenceKeeperBot
         {
             return text.StartsWith('/');
         }
-        private async Task<string> GetCommandResponse(Message message)
+        private async Task<string> ProcessCommand(Message message)
         {
             string[] words = message.Text
                 .Replace("@devsilencekeeper_bot", string.Empty)
@@ -192,6 +186,15 @@ namespace DevSilenceKeeperBot
         {
             var chatAdmins = await _bot.GetChatAdministratorsAsync(chatId);
             return chatAdmins.Any(member => member.User.Id == sender.Id);
+        }
+        private async Task<string> KickChatMember(Message message)
+        {
+            DateTime until = DateTime.Now.AddSeconds(31);
+            await _bot.KickChatMemberAsync(
+                chatId: message.Chat.Id,
+                userId: message.From.Id,
+                untilDate: until);
+            return $"Пользователь {GetUserFullName(message.From)} нарушил второе правило чата!";
         }
         private string GetUserFullName(User user)
         {
