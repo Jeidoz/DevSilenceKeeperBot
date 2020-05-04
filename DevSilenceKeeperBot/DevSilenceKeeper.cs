@@ -72,9 +72,14 @@ namespace DevSilenceKeeperBot
                 }
             }
         }
-        private bool IsCommand(string text)
+        private bool IsCommand(Message message)
         {
-            return text.StartsWith('/');
+            var chatForbiddenWords = _context.GetChatForbiddenWords(message.Chat.Id);
+            if (chatForbiddenWords.Any(word => message.Text.Contains(word)))
+            {
+                return false;
+            }
+            return message.Text.StartsWith('/');
         }
         private async Task<string> ProcessCommand(Message message)
         {
