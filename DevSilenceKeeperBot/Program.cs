@@ -14,14 +14,10 @@ namespace DevSilenceKeeperBot
                 {
                     bot = new DevSilenceKeeper(args[0]);
                 }
-                else if (args.Length == 2)
-                {
-                    bot = new DevSilenceKeeper(args[0], args[1]);
-                }
                 else
                 {
-                    Console.WriteLine("Для запуска бота задайте параметр токена (и опционально путь к файлу с запрещенных слов)");
-                    Console.WriteLine("./DevSilenceKeeper 012345:abcdf [words.txt]");
+                    Console.WriteLine("Для запуска бота задайте параметр токена");
+                    Console.WriteLine("./DevSilenceKeeper 012345:abcdf");
                     return;
                 }
 
@@ -30,7 +26,9 @@ namespace DevSilenceKeeperBot
                 do
                 {
                     if (Console.ReadLine() == "stop")
+                    {
                         break;
+                    }
                 }
                 while (true);
                 bot.StopPolling();

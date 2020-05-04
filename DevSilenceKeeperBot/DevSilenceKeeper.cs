@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LiteDB;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,24 +8,18 @@ using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
-using File = System.IO.File;
 
 namespace DevSilenceKeeperBot
 {
     internal sealed class DevSilenceKeeper
     {
-        private const char WordsSplitter = ';';
+        private readonly DbContext _context;
         private readonly ITelegramBotClient _bot;
-        private readonly string _wordsFilePath;
-        private List<string> _forbiddenWords;
 
-        public DevSilenceKeeper(string token, string wordsFilePath = "words.txt")
+        public DevSilenceKeeper(string token)
         {
+            _context = new DbContext();
             _bot = new TelegramBotClient(token);
-            _wordsFilePath = wordsFilePath;
-            _forbiddenWords = File.ReadAllText(wordsFilePath)
-                .Split(new char[] { WordsSplitter }, StringSplitOptions.RemoveEmptyEntries)
-                .ToList();
             _bot.OnMessage += OnMessage;
         }
 
@@ -46,7 +41,7 @@ namespace DevSilenceKeeperBot
             {
                 if (await IsAdmin(e.Message.From, e.Message.Chat.Id))
                 {
-                    replyMessage = $"Модератор {GetUserFullName(e.Message.From)} нарушает второе правило чата!";
+                    replyMessage = $"Модератор {GetUserFullName(e.Message.From)} нарушает правила чата!";
                 }
                 else
                 {
@@ -90,14 +85,16 @@ namespace DevSilenceKeeperBot
             string command = words.First();
             string args = words.Length > 1 ? words[1] : null;
             string response;
+            IEnumerable<string> chatForbiddenWords;
             switch (command)
             {
                 case "words":
                 case "templates":
-                    string templates = string.Join('\n', _forbiddenWords);
+                    string templates = string.Join('\n', _context.GetChatForbiddenWords(message.Chat.Id));
                     response = $"Cтроки-шаблоны в банлисте:\n{templates}";
                     break;
                 case "add":
+                    chatForbiddenWords = _context.GetChatForbiddenWords(message.Chat.Id);
                     if (!await IsAdmin(message.From, message.Chat.Id))
                     {
                         response = "Добавлять строки-шаблоны могут только модераторы!";
@@ -110,20 +107,21 @@ namespace DevSilenceKeeperBot
                         break;
                     }
 
-                    if (_forbiddenWords.Contains(args))
+                    if (chatForbiddenWords?.Contains(args) == true)
                     {
                         response = "Дананя строка-шаблон уже присуствует в банлисте.";
                         break;
                     }
 
-                    File.AppendAllText(_wordsFilePath, $"{args}{WordsSplitter}");
-                    _forbiddenWords.Add(args);
+                    _context.AddChatForbiddenWord(message.Chat.Id, args);
                     response = $"Строка-шаблон \"{args}\" успешно добавлена";
                     break;
                 case "remove":
                 case "delete":
                 case "del":
                 case "rm":
+                    chatForbiddenWords = _context.GetChatForbiddenWords(message.Chat.Id);
+
                     if (!await IsAdmin(message.From, message.Chat.Id))
                     {
                         response = "Удалять строки-шаблоны могут только модераторы!";
@@ -136,21 +134,16 @@ namespace DevSilenceKeeperBot
                         break;
                     }
 
-                    if (!_forbiddenWords.Contains(args))
+                    if (chatForbiddenWords?.Contains(args) == false)
                     {
                         response = "Дананя строка-шаблон отсуствует в банлисте.";
                         break;
                     }
 
-                    StringBuilder fileContent = new StringBuilder(File.ReadAllText(_wordsFilePath));
-                    fileContent.Replace($"{args}{WordsSplitter}", string.Empty);
-                    File.WriteAllText(_wordsFilePath, fileContent.ToString());
-
-                    _forbiddenWords.Remove(args);
+                    _context.RemoveChatForbiddenWord(message.Chat.Id, args);
                     response = $"Строка-шаблон \"{args}\" успешно убрана";
                     break;
                 case "help":
-                default:
                     response = string.Format("Список комманд:\n{0}\n{1}\n{2}\n{3}\n{4}\n{5}",
                         "/help – показать помощь",
                         "/words – показать запрещенные строки-шаблоны",
@@ -159,28 +152,38 @@ namespace DevSilenceKeeperBot
                         "/remove (/rm) – убрать запрещенную строку-шаблон",
                         "/delete (/del) – альтернатива /remove");
                     break;
+                default:
+                    response = default;
+                    break;
             }
 
             return response;
         }
         private bool IsContainsForbiddenWord(Message message)
         {
-
             if (string.IsNullOrEmpty(message.Text))
+            {
                 return false;
+            }
+
+            var chatForbiddenWords = _context.GetChatForbiddenWords(message.Chat.Id);
+
+            if(chatForbiddenWords == null || chatForbiddenWords.Count() == 0)
+            {
+                return false;
+            }
 
             if (message.Entities != null)
             {
-                foreach (var entity in message.Entities)
+                if (message.Entities
+                    .Any(entity => chatForbiddenWords
+                        .Any(word => entity.Url?.Contains(word) == true)))
                 {
-                    if (_forbiddenWords.Any(word => entity.Url.Contains(word)))
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
 
-            return _forbiddenWords.Any(word => message.Text.Contains(word));
+            return chatForbiddenWords.Any(word => message.Text.Contains(word));
         }
         private async Task<bool> IsAdmin(User sender, long chatId)
         {
@@ -194,7 +197,7 @@ namespace DevSilenceKeeperBot
                 chatId: message.Chat.Id,
                 userId: message.From.Id,
                 untilDate: until);
-            return $"Пользователь {GetUserFullName(message.From)} нарушил второе правило чата!";
+            return $"Пользователь {GetUserFullName(message.From)} нарушил правила чата!";
         }
         private string GetUserFullName(User user)
         {
