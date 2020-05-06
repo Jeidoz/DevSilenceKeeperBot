@@ -32,7 +32,7 @@ namespace DevSilenceKeeperBot
             }
 
             string replyMessage = default;
-            if (IsCommand(e.Message.Text))
+            if (IsCommand(e.Message))
             {
                 Console.WriteLine($"{GetUserFullName(e.Message.From)} запросил команду: {e.Message.Text}");
                 replyMessage = await ProcessCommand(e.Message);
