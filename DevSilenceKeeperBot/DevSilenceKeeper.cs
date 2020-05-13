@@ -1,10 +1,8 @@
-﻿using DevSilenceKeeperBot.Data;
-using DevSilenceKeeperBot.Helpers;
+﻿using DevSilenceKeeperBot.Helpers;
 using DevSilenceKeeperBot.Logging;
 using DevSilenceKeeperBot.Services;
 using DevSilenceKeeperBot.Types;
 using System;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
