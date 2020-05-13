@@ -1,5 +1,6 @@
-﻿using System;
-using System.IO;
+﻿using DevSilenceKeeperBot.Data;
+using StructureMap;
+using System;
 
 namespace DevSilenceKeeperBot
 {
@@ -7,45 +8,16 @@ namespace DevSilenceKeeperBot
     {
         static void Main(string[] args)
         {
-            try
+            var container = Container.For<ConsoleDependencyRegistry>();
+            if (args.Length == 1)
             {
-                DevSilenceKeeper bot;
-                if (args.Length == 1)
-                {
-                    bot = new DevSilenceKeeper(args[0]);
-                }
-                else
-                {
-                    Console.WriteLine("Для запуска бота задайте параметр токена");
-                    Console.WriteLine("./DevSilenceKeeper 012345:abcdf");
-                    return;
-                }
-
-                bot.StartPolling();
-                Console.WriteLine("Введите \"stop\" что бы остановить бота.");
-                do
-                {
-                    if (Console.ReadLine() == "stop")
-                    {
-                        break;
-                    }
-                }
-                while (true);
-                bot.StopPolling();
+                var bot = container.GetInstance<IDevSilenceKeeper>();
+                bot.Run();
             }
-            catch(FileNotFoundException)
+            else
             {
-                Console.WriteLine("Не удалось найти файл из запрещенными словами.");
-            }
-            catch (DirectoryNotFoundException)
-            {
-                Console.WriteLine("Не удалось найти файл из запрещенными словами.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Во время роботы случилась ошибка:");
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(ex.StackTrace);
+                Console.WriteLine("Для запуска бота задайте параметр токена");
+                Console.WriteLine("./DevSilenceKeeper 012345:abcdf");
                 return;
             }
         }

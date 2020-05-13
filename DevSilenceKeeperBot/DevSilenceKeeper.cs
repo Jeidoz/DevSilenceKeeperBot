@@ -1,7 +1,10 @@
-﻿using DevSilenceKeeperBot.Helpers;
+﻿using DevSilenceKeeperBot.Data;
+using DevSilenceKeeperBot.Helpers;
 using DevSilenceKeeperBot.Logging;
+using DevSilenceKeeperBot.Services;
 using DevSilenceKeeperBot.Types;
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -10,18 +13,44 @@ using Telegram.Bot.Types;
 
 namespace DevSilenceKeeperBot
 {
-    internal sealed class DevSilenceKeeper
+    public sealed class DevSilenceKeeper : IDevSilenceKeeper
     {
-        private readonly DbContext _context;
-        private readonly CommandHelper _commandHelper;
         private readonly ITelegramBotClient _bot;
+        private readonly IChatService _chatService;
+        private readonly CommandHelper _commandHelper;
 
-        public DevSilenceKeeper(string token)
+        public DevSilenceKeeper(IAppSettingsReader appSettingsReader, IChatService chatService)
         {
-            _context = new DbContext();
-            _commandHelper = new CommandHelper(_context);
-            _bot = new TelegramBotClient(token);
+            var settings = appSettingsReader.Read();
+            _bot = new TelegramBotClient(settings.BotToken);
+            _chatService = chatService;
+            _commandHelper = new CommandHelper(_chatService);
             _bot.OnMessage += OnMessage;
+        }
+
+        public void Run()
+        {
+            try
+            {
+                StartPolling();
+                Console.WriteLine("Введите \"stop\" что бы остановить бота.");
+                do
+                {
+                    if (Console.ReadLine() == "stop")
+                    {
+                        break;
+                    }
+                }
+                while (true);
+                StopPolling();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Во время роботы случилась ошибка:");
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace);
+                return;
+            }
         }
 
         private async void OnMessage(object sender, MessageEventArgs e)
@@ -60,7 +89,7 @@ namespace DevSilenceKeeperBot
                 return false;
             }
 
-            var chatForbiddenWords = _context.GetChatForbiddenWords(message.Chat.Id);
+            var chatForbiddenWords = _chatService.GetChatForbiddenWords(message.Chat.Id);
 
             if(chatForbiddenWords == null || chatForbiddenWords.Count() == 0)
             {
@@ -112,12 +141,12 @@ namespace DevSilenceKeeperBot
             }
         }
 
-        public void StartPolling()
+        private void StartPolling()
         {
             _bot.StartReceiving();
             ConsoleLogger.Info("Бот начал обрабатывать сообщения...");
         }
-        public void StopPolling()
+        private void StopPolling()
         {
             _bot.StopReceiving();
             ConsoleLogger.Info("Бот прекратил работу...");

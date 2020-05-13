@@ -1,35 +1,33 @@
-﻿using DevSilenceKeeperBot.Entities;
-using LiteDB;
+﻿using DevSilenceKeeperBot.Data;
+using DevSilenceKeeperBot.Entities;
 using System.Collections.Generic;
 
-namespace DevSilenceKeeperBot
+namespace DevSilenceKeeperBot.Services
 {
-    public sealed class DbContext
+    public sealed class ChatService : IChatService
     {
-        private readonly LiteDatabase _db;
-        private readonly ILiteCollection<Chat> _chats;
+        private readonly IDbContext _context;
 
-        public DbContext(string dbFilename = "db.db")
+        public ChatService(IDbContext dbContext)
         {
-            _db = new LiteDatabase(dbFilename);
-            _chats = _db.GetCollection<Chat>("chats");
+            _context = dbContext;
         }
 
         public IEnumerable<string> GetChatForbiddenWords(long chatId)
         {
-            return _chats.FindOne(chat => chat.ChatId == chatId)?.ForbiddenWords;
+            return _context.Chats.FindOne(chat => chat.ChatId == chatId)?.ForbiddenWords;
         }
         public bool AddChatForbiddenWord(long chatId, string word)
         {
-            Chat chat = _chats.FindOne(chat => chat.ChatId == chatId);
-            if(chat != null)
+            var chat = _context.Chats.FindOne(chat => chat.ChatId == chatId);
+            if (chat != null)
             {
                 chat.ForbiddenWords.Add(word);
-                return _chats.Update(chat);
+                return _context.Chats.Update(chat);
             }
             else
             {
-                _chats.Insert(new Chat
+                _context.Chats.Insert(new Chat
                 {
                     ChatId = chatId,
                     ForbiddenWords = new List<string> { word }
@@ -39,11 +37,11 @@ namespace DevSilenceKeeperBot
         }
         public bool RemoveChatForbiddenWord(long chatId, string word)
         {
-            Chat chat = _chats.FindOne(c => c.ChatId == chatId);
+            var chat = _context.Chats.FindOne(c => c.ChatId == chatId);
             if (chat != null)
             {
                 chat.ForbiddenWords.Remove(word);
-                return _chats.Update(chat);
+                return _context.Chats.Update(chat);
             }
             return false;
         }

@@ -1,4 +1,6 @@
-﻿using DevSilenceKeeperBot.Types;
+﻿using DevSilenceKeeperBot.Data;
+using DevSilenceKeeperBot.Services;
+using DevSilenceKeeperBot.Types;
 using System;
 using System.Linq;
 using Telegram.Bot.Types;
@@ -8,11 +10,11 @@ namespace DevSilenceKeeperBot.Helpers
 {
     public sealed class CommandHelper
     {
-        private readonly DbContext _context;
+        private readonly IChatService _chatService;
 
-        public CommandHelper(DbContext context)
+        public CommandHelper(IChatService chatService)
         {
-            _context = context;
+            _chatService = chatService;
         }
 
         public bool IsCommand(Message message)
@@ -74,7 +76,7 @@ namespace DevSilenceKeeperBot.Helpers
         }
         private string DoListCommand(ref long chatId)
         {
-            var chatForbiddenWords = _context.GetChatForbiddenWords(chatId);
+            var chatForbiddenWords = _chatService.GetChatForbiddenWords(chatId);
             if (chatForbiddenWords?.Count() > 0)
             {
                 string templates = string.Join('\n', chatForbiddenWords);
@@ -89,13 +91,13 @@ namespace DevSilenceKeeperBot.Helpers
                 return "Строка-шаблон должна состоять минимум из 4ех символов!";
             }
 
-            var chatForbiddenWords = _context.GetChatForbiddenWords(chatId);
+            var chatForbiddenWords = _chatService.GetChatForbiddenWords(chatId);
             if (chatForbiddenWords?.Contains(args) == true)
             {
                 return "Даная строка-шаблон уже присуствует в банлисте.";
             }
 
-            _context.AddChatForbiddenWord(chatId, args);
+            _chatService.AddChatForbiddenWord(chatId, args);
             return $"Строка-шаблон \"{args}\" успешно добавлена";
         }
         private string DoRemoveCommand(ref long chatId, string args)
@@ -105,13 +107,13 @@ namespace DevSilenceKeeperBot.Helpers
                 return "Строка-шаблон должна состоять минимум из 4ех символов!";
             }
 
-            var chatForbiddenWords = _context.GetChatForbiddenWords(chatId);
+            var chatForbiddenWords = _chatService.GetChatForbiddenWords(chatId);
             if (chatForbiddenWords?.Contains(args) == false)
             {
                 return "Даная строка-шаблон отсуствует в банлисте.";
             }
 
-            _context.RemoveChatForbiddenWord(chatId, args);
+            _chatService.RemoveChatForbiddenWord(chatId, args);
             return $"Строка-шаблон \"{args}\" успешно убрана";
         }
         private string DoHelpCommand()
