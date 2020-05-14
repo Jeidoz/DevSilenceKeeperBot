@@ -2,6 +2,7 @@
 using DevSilenceKeeperBot.Logging;
 using DevSilenceKeeperBot.Services;
 using DevSilenceKeeperBot.Types;
+using DevSilenceKeeperBot.Types.Settings;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,17 +17,18 @@ namespace DevSilenceKeeperBot
         private readonly ITelegramBotClient _bot;
         private readonly IChatService _chatService;
         private readonly CommandHelper _commandHelper;
+        private readonly AppSettings _settings;
 
         public DevSilenceKeeper(IAppSettingsReader appSettingsReader, IChatService chatService)
         {
-            var settings = appSettingsReader.Read();
-            _bot = new TelegramBotClient(settings.BotToken);
+            _settings = appSettingsReader.Read();
+            _bot = new TelegramBotClient(_settings.BotToken);
             _chatService = chatService;
             _commandHelper = new CommandHelper(_chatService);
             _bot.OnMessage += OnMessage;
         }
 
-        public void Run()
+        public async void Run()
         {
             try
             {
@@ -67,8 +69,21 @@ namespace DevSilenceKeeperBot
             {
                 replyMessage = await ProcessMessageWithForbiddenWord(e.Message);
             }
+            else if (IsHelloMessage(e.Message.Text))
+            {
+                await _bot.SendPhotoAsync(
+                    chatId: e.Message.Chat.Id,
+                    photo: "https://neprivet.ru/img/bad-good.png",
+                    caption: "https://neprivet.ru");
+            }
 
-            await SendReplyMessage(replyMessage, e.Message.Chat.Id);
+            if (!string.IsNullOrEmpty(replyMessage))
+            {
+                await _bot.SendTextMessageAsync(
+                    chatId: e.Message.Chat.Id, 
+                    text: replyMessage, 
+                    replyToMessageId: e.Message.MessageId);
+            }
         }
         private async Task<string> ProcessCommand(Message message)
         {
@@ -131,12 +146,13 @@ namespace DevSilenceKeeperBot
             return $"Пользователь {message.From} нарушил правила чата!";
         }
 
-        private async Task SendReplyMessage(string replyMessage, long chatId)
+        private bool IsHelloMessage(string messageText)
         {
-            if (!string.IsNullOrEmpty(replyMessage))
-            {
-                await _bot.SendTextMessageAsync(chatId, replyMessage);
-            }
+            string[] messageWords = Array.ConvertAll(
+                messageText.ToLower().Split(' ', options: StringSplitOptions.RemoveEmptyEntries),
+                p => p.Trim(new char[] { ',', '.', '!' }));
+            return _settings.HelloWords.Any(word => messageWords.Contains(word)) 
+                && messageWords.Length < 3;
         }
 
         private void StartPolling()
