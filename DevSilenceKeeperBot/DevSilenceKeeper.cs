@@ -28,7 +28,7 @@ namespace DevSilenceKeeperBot
             _bot.OnMessage += OnMessage;
         }
 
-        public async void Run()
+        public void Run()
         {
             try
             {
