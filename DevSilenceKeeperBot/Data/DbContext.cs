@@ -16,5 +16,10 @@ namespace DevSilenceKeeperBot.Data
             _db = new LiteDatabase($"{Process.GetCurrentProcess().ProcessName}.db");
             Chats = _db.GetCollection<Chat>("chats");
         }
+        public DbContext(LiteDatabase database)
+        {
+            _db = database;
+            Chats = _db.GetCollection<Chat>("chats");
+        }
     }
 }
