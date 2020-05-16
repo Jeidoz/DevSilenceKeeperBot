@@ -39,3 +39,6 @@ dotnet run
 - [LiteDb](https://github.com/mbdavid/LiteDB) – simple embedded NoSQL database.
 - [XUnit](https://github.com/xunit/xunit) – .NET Testing Framework.
 - [NePrivet.ru](https://neprivet.ru/) – image reply to "empty hello messages", that studies people how to correctly use chats.
+
+## License
+This project is licensed under the MIT License - see the (https://github.com/Jeidoz/DevSilenceKeeperBot/edit/master/LICENSE.md)[LICENSE].md file for details
