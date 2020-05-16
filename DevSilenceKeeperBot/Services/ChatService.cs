@@ -1,5 +1,6 @@
 ﻿using DevSilenceKeeperBot.Data;
 using DevSilenceKeeperBot.Entities;
+using DevSilenceKeeperBot.Exceptions;
 using System.Collections.Generic;
 
 namespace DevSilenceKeeperBot.Services
@@ -17,22 +18,29 @@ namespace DevSilenceKeeperBot.Services
         {
             return _context.Chats.FindOne(chat => chat.ChatId == chatId)?.ForbiddenWords;
         }
-        public bool AddChatForbiddenWord(long chatId, string word)
+        public Chat AddChatForbiddenWord(long chatId, string word)
         {
             var chat = _context.Chats.FindOne(chat => chat.ChatId == chatId);
             if (chat != null)
             {
+                if(chat.ForbiddenWords.Contains(word))
+                {
+                    throw new AddingDublicateRecord("Данная строка-шаблон уже существует в банлисте", nameof(word));
+                }
                 chat.ForbiddenWords.Add(word);
-                return _context.Chats.Update(chat);
+                _context.Chats.Update(chat);
+                return chat;
             }
             else
             {
-                _context.Chats.Insert(new Chat
+                var newChat = new Chat
                 {
                     ChatId = chatId,
                     ForbiddenWords = new List<string> { word }
-                });
-                return true;
+                };
+                newChat.Id = _context.Chats.Insert(newChat);
+
+                return newChat;
             }
         }
         public bool RemoveChatForbiddenWord(long chatId, string word)
@@ -40,6 +48,10 @@ namespace DevSilenceKeeperBot.Services
             var chat = _context.Chats.FindOne(c => c.ChatId == chatId);
             if (chat != null)
             {
+                if (!chat.ForbiddenWords.Contains(word))
+                {
+                    throw new RemovingNotExistingRecordException("Данная строка-шаблон отсуствует в банлисте", nameof(word));
+                }
                 chat.ForbiddenWords.Remove(word);
                 return _context.Chats.Update(chat);
             }
