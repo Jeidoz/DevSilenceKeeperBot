@@ -74,7 +74,8 @@ namespace DevSilenceKeeperBot
                 await _bot.SendPhotoAsync(
                     chatId: e.Message.Chat.Id,
                     photo: "https://neprivet.ru/img/bad-good.png",
-                    caption: "https://neprivet.ru");
+                    caption: "https://neprivet.ru",
+                    replyToMessageId: e.Message.MessageId);
             }
 
             if (!string.IsNullOrEmpty(replyMessage))
