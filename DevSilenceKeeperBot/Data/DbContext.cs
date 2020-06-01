@@ -6,17 +6,16 @@ namespace DevSilenceKeeperBot.Data
 {
     public sealed class DbContext : IDbContext
     {
-        private readonly LiteDatabase _db;
+        private readonly ILiteDatabase _db;
 
         public ILiteCollection<Chat> Chats { get; }
 
-        public DbContext()
+        public DbContext(string dbFilename)
         {
-            // Database's filename = Current app name + .db
-            _db = new LiteDatabase($"{Process.GetCurrentProcess().ProcessName}.db");
+            _db = new LiteDatabase(dbFilename);
             Chats = _db.GetCollection<Chat>("chats");
         }
-        public DbContext(LiteDatabase database)
+        public DbContext(ILiteDatabase database)
         {
             _db = database;
             Chats = _db.GetCollection<Chat>("chats");

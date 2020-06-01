@@ -1,4 +1,6 @@
-﻿using StructureMap;
+﻿using LiteDB;
+using StructureMap;
+using System.Diagnostics;
 
 namespace DevSilenceKeeperBot.Data
 {
@@ -9,10 +11,16 @@ namespace DevSilenceKeeperBot.Data
             Scan(scan =>
             {
                 scan.TheCallingAssembly();
+                scan.Exclude(type => type.Namespace.Contains("LiteDb"));
                 scan.WithDefaultConventions();
             });
 
-            For<IDbContext>().Singleton().Use<DbContext>();
+            // Database's filename = Current app name + .db
+            For<IDbContext>()
+                .Singleton()
+                .Use<DbContext>()
+                .Ctor<string>("dbFilename")
+                    .Is($"{Process.GetCurrentProcess().ProcessName}.db");
         }
     }
 }
