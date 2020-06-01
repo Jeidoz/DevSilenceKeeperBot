@@ -10,25 +10,25 @@ namespace DevSilenceKeeperBot.Exceptions
 
         }
 
-        public RemovingNotExistingRecordException(string? message)
+        public RemovingNotExistingRecordException(string message)
             : base(message)
         {
 
         }
 
-        public RemovingNotExistingRecordException(string? message, Exception? innerException)
+        public RemovingNotExistingRecordException(string message, Exception innerException)
             : base(message, innerException)
         {
 
         }
 
-        public RemovingNotExistingRecordException(string? message, string? paramName)
+        public RemovingNotExistingRecordException(string message, string paramName)
             : base(message, paramName)
         {
 
         }
 
-        public RemovingNotExistingRecordException(string? message, string? paramName, Exception? innerException)
+        public RemovingNotExistingRecordException(string message, string paramName, Exception innerException)
             : base(message, paramName, innerException)
         {
 
