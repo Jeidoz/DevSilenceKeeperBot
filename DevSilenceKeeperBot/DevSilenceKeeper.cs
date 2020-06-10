@@ -5,6 +5,8 @@ using DevSilenceKeeperBot.Types;
 using DevSilenceKeeperBot.Types.Settings;
 using System;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
@@ -162,24 +164,24 @@ namespace DevSilenceKeeperBot
             return $"Пользователь {message.From} нарушил правила чата!";
         }
 
-        private string[] GetWords(string text)
+        private string GetFormattedMessageText(string text)
         {
-            return Array.ConvertAll(
-                text.ToLower().Split(' ', options: StringSplitOptions.RemoveEmptyEntries),
-                p => p.Trim(new char[] { ',', '.', '!' }));
+            var pattern = new Regex("[-:!@#$%^&*()}{|\":?><\\[\\]\\;'/.,~]");
+            return pattern.Replace(text, "").ToLower();
         }
         private bool IsHelloMessage(string messageText)
         {
-            string[] messageWords = GetWords(messageText);
-            return _settings.HelloWords.Any(word => messageWords.Contains(word)) 
-                && messageWords.Length < 3;
+            const uint MaxHelloMesssageLength = 32;
+            string text = GetFormattedMessageText(messageText).Replace(" ", "");
+            return _settings.HelloWords.Any(word => text.Contains(word)) 
+                && text.Length < MaxHelloMesssageLength;
         }
         private bool IsGoogleMessage(string messageText)
         {
-            string[] messageWords = GetWords(messageText);
-            messageText = messageText.ToLower();
-            return _settings.GoogleWords.Any(phrase => messageText.StartsWith(phrase))
-                && messageWords.Length > 2;
+            const uint MinGoogleMesssageLength = 10;
+            string text = GetFormattedMessageText(messageText);
+            return _settings.GoogleWords.Any(phrase => text.StartsWith(phrase))
+                && text.Length > MinGoogleMesssageLength;
         }
 
         private void StartPolling()
