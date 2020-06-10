@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace DevSilenceKeeperBot
 {
@@ -74,8 +75,22 @@ namespace DevSilenceKeeperBot
                 await _bot.SendPhotoAsync(
                     chatId: e.Message.Chat.Id,
                     photo: "https://neprivet.ru/img/bad-good.png",
-                    caption: "https://neprivet.ru",
-                    replyToMessageId: e.Message.MessageId);
+                    caption: "[Непривет](https://neprivet.ru)",
+                    parseMode: ParseMode.MarkdownV2,
+                    replyToMessageId: e.Message.MessageId,
+                    disableNotification: true);
+            }
+            else if (IsGoogleMessage(e.Message.Text))
+            {
+                string imageCaption = $"[{e.Message.Text}](https://www.google.com/search?q={e.Message.Text})\n" +
+                    "[Пожалуйста, научитесь гуглить](http://sadykhzadeh.github.io/learn-to-google)";
+                await _bot.SendPhotoAsync(
+                    chatId: e.Message.Chat.Id,
+                    photo: "https://sadykhzadeh.github.io/learn-to-google/img/bad-good.jpg",
+                    caption: imageCaption,
+                    parseMode: ParseMode.MarkdownV2,
+                    replyToMessageId: e.Message.MessageId,
+                    disableNotification: true);
             }
 
             if (!string.IsNullOrEmpty(replyMessage))
@@ -147,13 +162,24 @@ namespace DevSilenceKeeperBot
             return $"Пользователь {message.From} нарушил правила чата!";
         }
 
+        private string[] GetWords(string text)
+        {
+            return Array.ConvertAll(
+                text.ToLower().Split(' ', options: StringSplitOptions.RemoveEmptyEntries),
+                p => p.Trim(new char[] { ',', '.', '!' }));
+        }
         private bool IsHelloMessage(string messageText)
         {
-            string[] messageWords = Array.ConvertAll(
-                messageText.ToLower().Split(' ', options: StringSplitOptions.RemoveEmptyEntries),
-                p => p.Trim(new char[] { ',', '.', '!' }));
+            string[] messageWords = GetWords(messageText);
             return _settings.HelloWords.Any(word => messageWords.Contains(word)) 
                 && messageWords.Length < 3;
+        }
+        private bool IsGoogleMessage(string messageText)
+        {
+            string[] messageWords = GetWords(messageText);
+            messageText = messageText.ToLower();
+            return _settings.GoogleWords.Any(phrase => messageText.StartsWith(phrase))
+                && messageWords.Length > 2;
         }
 
         private void StartPolling()

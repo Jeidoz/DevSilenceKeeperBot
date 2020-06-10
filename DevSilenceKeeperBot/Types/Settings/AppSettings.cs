@@ -6,5 +6,6 @@ namespace DevSilenceKeeperBot.Types.Settings
     {
         public string BotToken { get; set; }
         public string[] HelloWords { get; set; }
+        public string[] GoogleWords { get; set; }
     }
 }
