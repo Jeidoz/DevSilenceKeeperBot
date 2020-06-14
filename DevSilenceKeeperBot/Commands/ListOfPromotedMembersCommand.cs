@@ -23,14 +23,26 @@ namespace DevSilenceKeeperBot.Commands
         {
             var promotedMemberIds = _chatService.GetPromotedMembers(message.Chat.Id);
             List<string> promotedMembers = new List<string>();
-            foreach(var member in promotedMemberIds)
+            if (promotedMemberIds != null)
             {
-                promotedMembers.Add($"[@{member.Username} \\({member.UserId}\\)](tg://user?id={member.UserId})");
+                foreach (var member in promotedMemberIds)
+                {
+                    promotedMembers.Add($"[@{member.Username} \\({member.UserId}\\)](tg://user?id={member.UserId})");
+                }
             }
 
+            string response;
+            if (promotedMembers.Count > 0)
+            {
+                response = "Учасники чата с привилегиями:\n\n" + string.Join('\n', promotedMembers);
+            }
+            else
+            {
+                response = "В данном чате отсуствуют учасники с привилегиями\\.";
+            }
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: string.Join('\n', promotedMembers),
+                text: response,
                 replyToMessageId: message.MessageId,
                 parseMode: ParseMode.MarkdownV2);
         }
