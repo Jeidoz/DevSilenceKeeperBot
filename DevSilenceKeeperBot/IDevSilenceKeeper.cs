@@ -3,5 +3,6 @@
     public interface IDevSilenceKeeper
     {
         void Run();
+        void Cancel();
     }
 }

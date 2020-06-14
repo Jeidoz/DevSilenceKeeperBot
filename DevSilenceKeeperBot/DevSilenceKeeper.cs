@@ -6,6 +6,7 @@ using DevSilenceKeeperBot.Types.Settings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 
@@ -13,6 +14,8 @@ namespace DevSilenceKeeperBot
 {
     public sealed class DevSilenceKeeper : IDevSilenceKeeper
     {
+        private CancellationTokenSource tokenSource => new CancellationTokenSource();
+
         private readonly TelegramBotClient _botClient;
         private readonly IChatService _chatService;
         private readonly ILogger _logger;
@@ -58,24 +61,26 @@ namespace DevSilenceKeeperBot
             try
             {
                 StartPolling();
-                Console.WriteLine("Введите \"stop\" что бы остановить бота.");
-                do
+                while(!tokenSource.IsCancellationRequested)
                 {
-                    if (Console.ReadLine().ToLower() == "stop")
-                    {
-                        break;
-                    }
-                }
-                while (true);
+                    Thread.Sleep(TimeSpan.FromMinutes(1));
+                };
                 StopPolling();
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Во время роботы случилась ошибка:");
                 Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.Source);
                 Console.WriteLine(ex.StackTrace);
+                Console.WriteLine(ex.InnerException);
                 return;
             }
+        }
+
+        public void Cancel()
+        {
+            tokenSource.Cancel();
         }
 
         private async void OnMessage(object sender, MessageEventArgs e)
