@@ -47,7 +47,9 @@ namespace DevSilenceKeeperBot
                 new ForbiddenWordCommand(_chatService),
                 new ListOfPromotedMembersCommand(_chatService),
                 new PromoteMemberCommand(_chatService, _logger),
-                new UnpromoteMemberCommand(_chatService, _logger)
+                new UnpromoteMemberCommand(_chatService, _logger),
+                new MuteCommand(_chatService),
+                new UnmuteCommand(_chatService)
             };
         }
 
