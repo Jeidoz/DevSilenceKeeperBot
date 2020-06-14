@@ -7,5 +7,6 @@ namespace DevSilenceKeeperBot.Entities
         public int Id { get; set; }
         public long ChatId { get; set; }
         public List<string> ForbiddenWords { get; set; }
+        public List<PromotedMember> PromotedMembers { get; set; }
     }
 }

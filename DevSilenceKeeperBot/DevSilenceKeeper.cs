@@ -44,7 +44,10 @@ namespace DevSilenceKeeperBot
                 new RemoveCommand(_chatService),
                 new NotHelloCommand(_settings.HelloWords),
                 new GoogleCommand(_settings.GoogleWords),
-                new ForbiddenWordCommand(_chatService)
+                new ForbiddenWordCommand(_chatService),
+                new ListOfPromotedMembersCommand(_chatService),
+                new PromoteMemberCommand(_chatService, _logger),
+                new UnpromoteMemberCommand(_chatService, _logger)
             };
         }
 
