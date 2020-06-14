@@ -29,6 +29,7 @@ namespace DevSilenceKeeperBot.Commands
                     chatId: message.Chat.Id,
                     text: "Розмутить могут только модераторы и учасники чата с привилегиями!",
                     replyToMessageId: message.MessageId);
+                return;
             }
 
             isAdmin = await message.ReplyToMessage.From.IsAdmin(message.Chat.Id, botClient);
@@ -38,6 +39,7 @@ namespace DevSilenceKeeperBot.Commands
                     chatId: message.Chat.Id,
                     text: "Ничосе!. Админа раззамутить пытаются...",
                     replyToMessageId: message.MessageId);
+                return;
             }
 
             var unmutePermisions = new ChatPermissions

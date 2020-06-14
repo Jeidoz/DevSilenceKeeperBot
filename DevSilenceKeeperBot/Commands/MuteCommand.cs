@@ -32,6 +32,7 @@ namespace DevSilenceKeeperBot.Commands
                     chatId: message.Chat.Id,
                     text: "Мутить могут только модераторы и учасники чата с привилегиями!",
                     replyToMessageId: message.MessageId);
+                return;
             }
 
             isAdmin = await message.ReplyToMessage.From.IsAdmin(message.Chat.Id, botClient);
@@ -41,6 +42,7 @@ namespace DevSilenceKeeperBot.Commands
                     chatId: message.Chat.Id,
                     text: "Ну тут наши полномочия всё. Админа замутить не имеею права...",
                     replyToMessageId: message.MessageId);
+                return;
             }
             TimeSpan muteDuration = DefaultMuteDuration;
             try

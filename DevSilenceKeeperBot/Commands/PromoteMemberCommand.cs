@@ -65,7 +65,7 @@ namespace DevSilenceKeeperBot.Commands
             }
             catch(Exception ex)
             {
-                response = $"{usernameMarkup}, извини, я сломался. Спамь создателю.";
+                response = $"{usernameMarkup}, извини, я сломался\\. Спамь создателю\\.";
                 _logger.Error($"[{nameof(ex)}]: {ex.Message}\n{ex.StackTrace}");
             }
 
