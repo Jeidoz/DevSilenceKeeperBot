@@ -1,4 +1,4 @@
-﻿using LiteDB;
+﻿using DevSilenceKeeperBot.Logging;
 using StructureMap;
 using System.Diagnostics;
 
@@ -21,6 +21,8 @@ namespace DevSilenceKeeperBot.Data
                 .Use<DbContext>()
                 .Ctor<string>("dbFilename")
                     .Is($"{Process.GetCurrentProcess().ProcessName}.db");
+
+            For<ILogger>().Use<ConsoleLogger>();
         }
     }
 }
