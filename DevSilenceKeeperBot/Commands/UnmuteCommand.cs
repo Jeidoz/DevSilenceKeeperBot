@@ -22,7 +22,7 @@ namespace DevSilenceKeeperBot.Commands
         {
             var promotedMembers = _chatService.GetPromotedMembers(message.Chat.Id);
             bool isAdmin = await message.From.IsAdmin(message.Chat.Id, botClient);
-            bool isPromotedChatMember = promotedMembers.Any(member => member.UserId == message.From.Id);
+            bool isPromotedChatMember = promotedMembers?.Any(member => member.UserId == message.From.Id) == true;
             if (!(isAdmin || isPromotedChatMember))
             {
                 await botClient.SendTextMessageAsync(
