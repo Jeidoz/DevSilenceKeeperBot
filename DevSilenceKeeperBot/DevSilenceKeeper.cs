@@ -171,17 +171,17 @@ namespace DevSilenceKeeperBot
         }
         private bool IsHelloMessage(string messageText)
         {
-            const uint MaxHelloMesssageLength = 32;
-            string text = GetFormattedMessageText(messageText).Replace(" ", "");
-            return _settings.HelloWords.Any(word => text.Contains(word)) 
-                && text.Length < MaxHelloMesssageLength;
+            const uint MaxWordsInHelloMesssage = 2;
+            string[] words = GetFormattedMessageText(messageText).Split();
+            return _settings.HelloWords.Any(word => words.Contains(word)) 
+                && words.Length <= MaxWordsInHelloMesssage;
         }
         private bool IsGoogleMessage(string messageText)
         {
-            const uint MinGoogleMesssageLength = 10;
-            string text = GetFormattedMessageText(messageText);
-            return _settings.GoogleWords.Any(phrase => text.StartsWith(phrase))
-                && text.Length > MinGoogleMesssageLength;
+            const uint MinWordsGoogleMesssageLength = 3;
+            string formattedText = GetFormattedMessageText(messageText);
+            return _settings.GoogleWords.Any(phrase => formattedText.StartsWith(phrase))
+                && formattedText.Split().Length >= MinWordsGoogleMesssageLength;
         }
 
         private void StartPolling()
