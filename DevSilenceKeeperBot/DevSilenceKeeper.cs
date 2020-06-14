@@ -84,7 +84,7 @@ namespace DevSilenceKeeperBot
             }
             else if (IsGoogleMessage(e.Message.Text))
             {
-                string imageCaption = $"[{e.Message.Text}](https://www.google.com/search?q={e.Message.Text})\n" +
+                string imageCaption = $"[{e.Message.Text}](https://www.google.com/search?q={e.Message.Text})\n\n" +
                     "[Пожалуйста, научитесь гуглить](http://sadykhzadeh.github.io/learn-to-google)";
                 await _bot.SendPhotoAsync(
                     chatId: e.Message.Chat.Id,
