@@ -63,12 +63,12 @@ namespace DevSilenceKeeperBot.Commands
             catch (RemovingNotExistingRecordException)
             {
                 response = $"{usernameMarkup}, ты и так обычный смертный ಠ\\_ಠ";
-                _logger.Warning($"\\[{nameof(RemovingNotExistingRecordException)}\\]: Chat: {message.Chat}; Invoker: {message.From}; Text: \"{message.Text}\"");
+                _logger.Warning($"[{nameof(RemovingNotExistingRecordException)}]: Chat: {message.Chat}; Invoker: {message.From}; Text: \"{message.Text}\"");
             }
             catch (Exception ex)
             {
                 response = $"{usernameMarkup}, извини, я сломался. Спамь создателю.";
-                _logger.Error($"\\[{nameof(ex)}\\]: {ex.Message}\n{ex.StackTrace}");
+                _logger.Error($"[{nameof(ex)}]: {ex.Message}\n{ex.StackTrace}");
             }
 
             await botClient.SendTextMessageAsync(
