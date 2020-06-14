@@ -2,21 +2,21 @@
 
 namespace DevSilenceKeeperBot.Logging
 {
-    public static class ConsoleLogger
+    public sealed class ConsoleLogger : ILogger
     {
-        public static void Info(string text)
+        public void Info(string text)
         {
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine($"[INFO]: {text}");
         }
 
-        public static void Warning(string text)
+        public void Warning(string text)
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine($"[WARNING]: {text}");
         }
 
-        public static void Error(string text, Exception ex = null)
+        public void Error(string text, Exception ex = null)
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"[ERROR]: {text}");
