@@ -14,7 +14,7 @@ namespace DevSilenceKeeperBot
 {
     public sealed class DevSilenceKeeper : IDevSilenceKeeper
     {
-        private CancellationTokenSource tokenSource => new CancellationTokenSource();
+        private CancellationTokenSource _tokenSource = new CancellationTokenSource();
 
         private readonly TelegramBotClient _botClient;
         private readonly IChatService _chatService;
@@ -24,7 +24,7 @@ namespace DevSilenceKeeperBot
         private readonly List<Command> _commands;
 
         public DevSilenceKeeper(
-            IAppSettingsReader appSettingsReader, 
+            IAppSettingsReader appSettingsReader,
             IChatService chatService,
             ILogger logger)
         {
@@ -61,7 +61,7 @@ namespace DevSilenceKeeperBot
             try
             {
                 StartPolling();
-                while(!tokenSource.IsCancellationRequested)
+                while (!_tokenSource.IsCancellationRequested)
                 {
                     Thread.Sleep(TimeSpan.FromMinutes(1));
                 };
@@ -80,7 +80,7 @@ namespace DevSilenceKeeperBot
 
         public void Cancel()
         {
-            tokenSource.Cancel();
+            _tokenSource.Cancel();
         }
 
         private async void OnMessage(object sender, MessageEventArgs e)
@@ -90,9 +90,9 @@ namespace DevSilenceKeeperBot
                 return;
             }
 
-            foreach(var command in _commands)
+            foreach (var command in _commands)
             {
-                if(command.Contains(e.Message))
+                if (command.Contains(e.Message))
                 {
                     await command.Execute(e.Message, _botClient);
                     if (command is ForbiddenWordCommand)
