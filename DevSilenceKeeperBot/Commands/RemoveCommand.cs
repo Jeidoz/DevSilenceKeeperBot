@@ -20,12 +20,12 @@ namespace DevSilenceKeeperBot.Commands
 
         public override async Task Execute(Message message, TelegramBotClient botClient)
         {
-            if (await message.From.IsAdmin(message.Chat.Id, botClient) == false)
+            if (!await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false))
             {
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: "Добавлять строки-шаблоны могут только модераторы!",
-                    replyToMessageId: message.MessageId);
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
             }
 
@@ -39,7 +39,7 @@ namespace DevSilenceKeeperBot.Commands
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: "Строка-шаблон должна состоять минимум из 4ех символов!",
-                    replyToMessageId: message.MessageId);
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
             }
 
@@ -48,8 +48,8 @@ namespace DevSilenceKeeperBot.Commands
             {
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: "Даная строка-шаблон отсуствует в банлисте.",
-                    replyToMessageId: message.MessageId);
+                    text: "Данная строка-шаблон отсутствует в банлисте.",
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
             }
 
@@ -57,7 +57,7 @@ namespace DevSilenceKeeperBot.Commands
             await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: $"Строка-шаблон \"{args}\" успешно убрана",
-                    replyToMessageId: message.MessageId);
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
         }
     }
 }

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace DevSilenceKeeperBot.Types.Settings
+﻿namespace DevSilenceKeeperBot.Types.Settings
 {
     public sealed class AppSettings
     {

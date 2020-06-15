@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace DevSilenceKeeperBot.Entities
+﻿namespace DevSilenceKeeperBot.Entities
 {
     public sealed class PromotedMember
     {

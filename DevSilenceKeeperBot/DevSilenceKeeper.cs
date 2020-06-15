@@ -5,7 +5,6 @@ using DevSilenceKeeperBot.Services;
 using DevSilenceKeeperBot.Types.Settings;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Telegram.Bot;
 using Telegram.Bot.Args;
@@ -14,7 +13,7 @@ namespace DevSilenceKeeperBot
 {
     public sealed class DevSilenceKeeper : IDevSilenceKeeper
     {
-        private CancellationTokenSource _tokenSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource _tokenSource = new CancellationTokenSource();
 
         private readonly TelegramBotClient _botClient;
         private readonly IChatService _chatService;
@@ -37,6 +36,7 @@ namespace DevSilenceKeeperBot
 
             InitializeListOfBotCommands(out _commands);
         }
+
         private void InitializeListOfBotCommands(out List<Command> commands)
         {
             commands = new List<Command>
@@ -56,6 +56,31 @@ namespace DevSilenceKeeperBot
             };
         }
 
+        private async void OnMessage(object sender, MessageEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e.Message.Text))
+            {
+                return;
+            }
+
+            foreach (var command in _commands)
+            {
+                if (command.Contains(e.Message))
+                {
+                    await command.Execute(e.Message, _botClient).ConfigureAwait(false);
+                    if (command is ForbiddenWordCommand)
+                    {
+                        _logger.Info($"{e.Message.From} нарушил правила чата: \"{e.Message.Text}\"");
+                    }
+                    else
+                    {
+                        _logger.Info($"{e.Message.From} запросил команду {command.Triggers[0]}");
+                    }
+                    return;
+                }
+            }
+        }
+
         public void Run()
         {
             try
@@ -64,7 +89,7 @@ namespace DevSilenceKeeperBot
                 while (!_tokenSource.IsCancellationRequested)
                 {
                     Thread.Sleep(TimeSpan.FromMinutes(1));
-                };
+                }
                 StopPolling();
             }
             catch (Exception ex)
@@ -78,45 +103,21 @@ namespace DevSilenceKeeperBot
             }
         }
 
-        public void Cancel()
-        {
-            _tokenSource.Cancel();
-        }
-
-        private async void OnMessage(object sender, MessageEventArgs e)
-        {
-            if (string.IsNullOrEmpty(e.Message.Text))
-            {
-                return;
-            }
-
-            foreach (var command in _commands)
-            {
-                if (command.Contains(e.Message))
-                {
-                    await command.Execute(e.Message, _botClient);
-                    if (command is ForbiddenWordCommand)
-                    {
-                        _logger.Info($"{e.Message.From} нарушил правила чата: \"{e.Message.Text}\"");
-                    }
-                    else
-                    {
-                        _logger.Info($"{e.Message.From} запросил команду {command.Triggers.First()}");
-                    }
-                    return;
-                }
-            }
-        }
-
         private void StartPolling()
         {
             _botClient.StartReceiving();
             _logger.Info("Бот начал обрабатывать сообщения...");
         }
+
         private void StopPolling()
         {
             _botClient.StopReceiving();
             _logger.Info("Бот прекратил работу...");
+        }
+
+        public void Cancel()
+        {
+            _tokenSource.Cancel();
         }
     }
 }

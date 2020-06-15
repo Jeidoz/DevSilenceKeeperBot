@@ -4,10 +4,11 @@ using System;
 
 namespace DevSilenceKeeperBot
 {
-    class Program
+    internal static class Program
     {
-        static IDevSilenceKeeper _bot;
-        static void Main(string[] args)
+        private static IDevSilenceKeeper _bot;
+
+        private static void Main()
         {
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
 

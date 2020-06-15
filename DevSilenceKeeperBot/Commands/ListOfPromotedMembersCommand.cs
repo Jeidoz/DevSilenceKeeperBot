@@ -1,7 +1,5 @@
 ﻿using DevSilenceKeeperBot.Services;
-using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -34,17 +32,17 @@ namespace DevSilenceKeeperBot.Commands
             string response;
             if (promotedMembers.Count > 0)
             {
-                response = "Учасники чата с привилегиями:\n\n" + string.Join('\n', promotedMembers);
+                response = "Участники чата с привилегиями:\n\n" + string.Join('\n', promotedMembers);
             }
             else
             {
-                response = "В данном чате отсуствуют учасники с привилегиями\\.";
+                response = "В данном чате отсуствуют участники с привилегиями\\.";
             }
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 text: response,
                 replyToMessageId: message.MessageId,
-                parseMode: ParseMode.Markdown);
+                parseMode: ParseMode.Markdown).ConfigureAwait(false);
         }
     }
 }

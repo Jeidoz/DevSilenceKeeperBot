@@ -28,13 +28,13 @@ namespace DevSilenceKeeperBot.Commands
             }
             else
             {
-                response = $"Банлист пуст.";
+                response = "Банлист пуст.";
             }
 
             await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: response,
-                    replyToMessageId: message.MessageId);
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
         }
     }
 }

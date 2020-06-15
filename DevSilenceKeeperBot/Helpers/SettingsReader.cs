@@ -15,12 +15,11 @@ namespace DevSilenceKeeperBot.Helpers
             {
                 json = File.ReadAllText("appSettings.json", Encoding.UTF8);
             }
-            catch(FileNotFoundException)
+            catch (FileNotFoundException)
             {
                 throw new MissingAppSettingsFileException("appSettings.json file is missing in the app folder");
             }
             return JsonConvert.DeserializeObject<AppSettings>(json);
-
         }
     }
 }

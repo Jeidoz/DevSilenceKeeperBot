@@ -21,7 +21,7 @@ namespace DevSilenceKeeperBot.Logging
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"[ERROR]: {text}");
 
-            if(ex != null)
+            if (ex != null)
             {
                 Console.WriteLine(ex.Message);
                 Console.WriteLine(ex.StackTrace);

@@ -9,7 +9,9 @@ namespace DevSilenceKeeperBot.Commands
     public abstract class Command
     {
         public abstract string[] Triggers { get; }
+
         public abstract Task Execute(Message message, TelegramBotClient botClient);
+
         public virtual bool Contains(Message message)
         {
             bool? isCommandType = message.Entities
@@ -19,7 +21,7 @@ namespace DevSilenceKeeperBot.Commands
                 return false;
             }
 
-            return this.Triggers.Any(name => message.Text.StartsWith(name));
+            return Triggers.Any(name => message.Text.StartsWith(name));
         }
     }
 }

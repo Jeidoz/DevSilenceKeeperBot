@@ -1,6 +1,5 @@
 ﻿using DevSilenceKeeperBot.Entities;
 using LiteDB;
-using System.Diagnostics;
 
 namespace DevSilenceKeeperBot.Data
 {
@@ -15,6 +14,7 @@ namespace DevSilenceKeeperBot.Data
             _db = new LiteDatabase(dbFilename);
             Chats = _db.GetCollection<Chat>("chats");
         }
+
         public DbContext(ILiteDatabase database)
         {
             _db = database;

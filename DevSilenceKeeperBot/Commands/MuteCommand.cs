@@ -1,9 +1,7 @@
 ﻿using DevSilenceKeeperBot.Extensions;
 using DevSilenceKeeperBot.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -12,7 +10,7 @@ namespace DevSilenceKeeperBot.Commands
 {
     public sealed class MuteCommand : Command
     {
-        private readonly TimeSpan DefaultMuteDuration = TimeSpan.FromDays(1);
+        private readonly TimeSpan _defaultMuteDuration = TimeSpan.FromDays(1);
         private readonly IChatService _chatService;
         public override string[] Triggers => new string[] { "/mute" };
 
@@ -24,37 +22,37 @@ namespace DevSilenceKeeperBot.Commands
         public override async Task Execute(Message message, TelegramBotClient botClient)
         {
             var promotedMembers = _chatService.GetPromotedMembers(message.Chat.Id);
-            bool isAdmin = await message.From.IsAdmin(message.Chat.Id, botClient);
+            bool isAdmin = await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false);
             bool isPromotedChatMember = promotedMembers?.Any(member => member.UserId == message.From.Id) == true;
             if (!(isAdmin || isPromotedChatMember))
             {
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: "Мутить могут только модераторы и учасники чата с привилегиями!",
-                    replyToMessageId: message.MessageId);
+                    text: "Мутить могут только модераторы и участники чата с привилегиями!",
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
             }
 
-            isAdmin = await message.ReplyToMessage.From.IsAdmin(message.Chat.Id, botClient);
+            isAdmin = await message.ReplyToMessage.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false);
             if (isAdmin)
             {
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: "Ну тут наши полномочия всё. Админа замутить не имеею права...",
-                    replyToMessageId: message.MessageId);
+                    text: "Ну тут наши полномочия всё. Админа замутить не имею права...",
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
             }
-            TimeSpan muteDuration = DefaultMuteDuration;
+            TimeSpan muteDuration = _defaultMuteDuration;
             try
             {
                 muteDuration = GetMuteDuration(message.Text);
             }
-            catch(ArgumentException ex)
+            catch (ArgumentException ex)
             {
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: ex.Message,
-                    replyToMessageId: message.MessageId);
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
             }
             DateTime muteUntilDate = DateTime.Now + muteDuration;
@@ -71,8 +69,9 @@ namespace DevSilenceKeeperBot.Commands
             Task.WaitAll(new Task[] { muteChatMember, reportMute });
             await botClient.DeleteMessageAsync(
                 chatId: message.Chat.Id,
-                messageId: message.ReplyToMessage.MessageId);
+                messageId: message.ReplyToMessage.MessageId).ConfigureAwait(false);
         }
+
         private TimeSpan GetMuteDuration(string commandArgs)
         {
             var muteDurationString = commandArgs
@@ -81,11 +80,11 @@ namespace DevSilenceKeeperBot.Commands
 
             if (string.IsNullOrWhiteSpace(muteDurationString))
             {
-                return DefaultMuteDuration;
+                return _defaultMuteDuration;
             }
 
             bool isParsed = TimeSpan.TryParse(muteDurationString, out TimeSpan muteDuration);
-            if(isParsed)
+            if (isParsed)
             {
                 if (muteDuration > TimeSpan.Zero)
                 {

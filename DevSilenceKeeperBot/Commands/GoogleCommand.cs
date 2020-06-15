@@ -35,7 +35,7 @@ namespace DevSilenceKeeperBot.Commands
                 caption: imageCaption,
                 parseMode: ParseMode.MarkdownV2,
                 replyToMessageId: message.MessageId,
-                disableNotification: true);
+                disableNotification: true).ConfigureAwait(false);
         }
     }
 }

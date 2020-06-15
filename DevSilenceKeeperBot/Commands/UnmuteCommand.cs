@@ -21,24 +21,24 @@ namespace DevSilenceKeeperBot.Commands
         public override async Task Execute(Message message, TelegramBotClient botClient)
         {
             var promotedMembers = _chatService.GetPromotedMembers(message.Chat.Id);
-            bool isAdmin = await message.From.IsAdmin(message.Chat.Id, botClient);
+            bool isAdmin = await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false);
             bool isPromotedChatMember = promotedMembers?.Any(member => member.UserId == message.From.Id) == true;
             if (!(isAdmin || isPromotedChatMember))
             {
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: "Розмутить могут только модераторы и учасники чата с привилегиями!",
-                    replyToMessageId: message.MessageId);
+                    text: "Розмутить могут только модераторы и участники чата с привилегиями!",
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
             }
 
-            isAdmin = await message.ReplyToMessage.From.IsAdmin(message.Chat.Id, botClient);
+            isAdmin = await message.ReplyToMessage.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false);
             if (isAdmin)
             {
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: "Ничосе!. Админа раззамутить пытаются...",
-                    replyToMessageId: message.MessageId);
+                    text: "Ничосе!. Админа розмутить пытаются...",
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
             }
 
@@ -54,11 +54,11 @@ namespace DevSilenceKeeperBot.Commands
                 chatId: message.Chat.Id,
                 userId: message.ReplyToMessage.From.Id,
                 permissions: unmutePermisions,
-                untilDate: DateTime.Now);
+                untilDate: DateTime.Now).ConfigureAwait(false);
             await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 text: $"{message.ReplyToMessage.From} розмучен",
-                replyToMessageId: message.MessageId);
+                replyToMessageId: message.MessageId).ConfigureAwait(false);
         }
     }
 }

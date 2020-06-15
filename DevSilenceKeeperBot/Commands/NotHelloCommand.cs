@@ -30,10 +30,10 @@ namespace DevSilenceKeeperBot.Commands
             await botClient.SendPhotoAsync(
                 chatId: message.Chat.Id,
                 photo: "https://neprivet.ru/img/bad-good.png",
-                caption: "[Непривет](https://neprivet.ru)",
+                caption: "[Не привет](https://neprivet.ru)",
                 parseMode: ParseMode.MarkdownV2,
                 replyToMessageId: message.MessageId,
-                disableNotification: true);
+                disableNotification: true).ConfigureAwait(false);
         }
     }
 }

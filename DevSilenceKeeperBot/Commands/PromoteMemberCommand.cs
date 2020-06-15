@@ -24,30 +24,30 @@ namespace DevSilenceKeeperBot.Commands
 
         public override async Task Execute(Message message, TelegramBotClient botClient)
         {
-            if (await message.From.IsAdmin(message.Chat.Id, botClient) == false)
+            if (!await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false))
             {
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: "Надавать привилегии могут только модераторы!",
-                    replyToMessageId: message.MessageId);
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
             }
 
-            if(string.IsNullOrEmpty(message.ReplyToMessage.Text))
+            if (string.IsNullOrEmpty(message.ReplyToMessage.Text))
             {
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: "Для повышения привилегий, нужно делать Reply на сообщение учасника чата.",
-                    replyToMessageId: message.MessageId);
+                    text: "Для повышения привилегий, нужно делать Reply на сообщение участника чата.",
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
             }
 
-            if(message.ReplyToMessage.From == message.From)
+            if (message.ReplyToMessage.From == message.From)
             {
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: "Повышать самого себя любимого как-то неправильно...",
-                    replyToMessageId: message.MessageId);
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
             }
 
@@ -58,14 +58,14 @@ namespace DevSilenceKeeperBot.Commands
                 _chatService.AddPromotedMember(message.Chat.Id, message.ReplyToMessage.From);
                 response = $"{usernameMarkup}, поздравляю из повышением\\!";
             }
-            catch(AddingDublicateRecord)
+            catch (AddingDublicateRecord)
             {
                 response = $"{usernameMarkup}, ты уже привилегирован ಠ\\_ಠ";
                 _logger.Warning($"[{nameof(AddingDublicateRecord)}]: Chat: {message.Chat}; Invoker: {message.From}; Text: \"{message.Text}\"");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                response = $"{usernameMarkup}, извини, я сломался\\. Спамь создателю\\.";
+                response = $"{usernameMarkup}, извини, я сломался\\. Пиши создателю\\.";
                 _logger.Error($"[{nameof(ex)}]: {ex.Message}\n{ex.StackTrace}");
             }
 
@@ -73,7 +73,7 @@ namespace DevSilenceKeeperBot.Commands
                 chatId: message.Chat.Id,
                 text: response,
                 replyToMessageId: message.MessageId,
-                parseMode: ParseMode.Markdown);
+                parseMode: ParseMode.Markdown).ConfigureAwait(false);
         }
     }
 }

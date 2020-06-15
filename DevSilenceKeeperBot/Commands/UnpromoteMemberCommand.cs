@@ -3,8 +3,6 @@ using DevSilenceKeeperBot.Extensions;
 using DevSilenceKeeperBot.Logging;
 using DevSilenceKeeperBot.Services;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -26,12 +24,12 @@ namespace DevSilenceKeeperBot.Commands
 
         public override async Task Execute(Message message, TelegramBotClient botClient)
         {
-            if (await message.From.IsAdmin(message.Chat.Id, botClient) == false)
+            if (!await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false))
             {
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: "Надавать привилегии могут только модераторы!",
-                    replyToMessageId: message.MessageId);
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
             }
 
@@ -39,8 +37,8 @@ namespace DevSilenceKeeperBot.Commands
             {
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
-                    text: "Для понижения привилегий, нужно делать Reply на сообщение учасника чата.",
-                    replyToMessageId: message.MessageId);
+                    text: "Для понижения привилегий, нужно делать Reply на сообщение участника чата.",
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
             }
 
@@ -49,7 +47,7 @@ namespace DevSilenceKeeperBot.Commands
                 await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: "Понижать самого себя любимого как-то неправильно...",
-                    replyToMessageId: message.MessageId);
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
             }
 
@@ -67,7 +65,7 @@ namespace DevSilenceKeeperBot.Commands
             }
             catch (Exception ex)
             {
-                response = $"{usernameMarkup}, извини, я сломался. Спамь создателю.";
+                response = $"{usernameMarkup}, извини, я сломался. Пиши создателю.";
                 _logger.Error($"[{nameof(ex)}]: {ex.Message}\n{ex.StackTrace}");
             }
 
@@ -75,7 +73,7 @@ namespace DevSilenceKeeperBot.Commands
                 chatId: message.Chat.Id,
                 text: response,
                 replyToMessageId: message.MessageId,
-                parseMode: ParseMode.Markdown);
+                parseMode: ParseMode.Markdown).ConfigureAwait(false);
         }
     }
 }

@@ -21,12 +21,13 @@ namespace DevSilenceKeeperBot.Services
         {
             return _context.Chats.FindOne(chat => chat.ChatId == chatId)?.ForbiddenWords;
         }
+
         public Chat AddChatForbiddenWord(long chatId, string word)
         {
             var chat = _context.Chats.FindOne(chat => chat.ChatId == chatId);
             if (chat != null)
             {
-                if(chat.ForbiddenWords.Contains(word))
+                if (chat.ForbiddenWords.Contains(word))
                 {
                     throw new AddingDublicateRecord("Данная строка-шаблон уже существует в банлисте", nameof(word));
                 }
@@ -47,6 +48,7 @@ namespace DevSilenceKeeperBot.Services
                 return newChat;
             }
         }
+
         public bool RemoveChatForbiddenWord(long chatId, string word)
         {
             var chat = _context.Chats.FindOne(c => c.ChatId == chatId);
@@ -54,29 +56,31 @@ namespace DevSilenceKeeperBot.Services
             {
                 if (!chat.ForbiddenWords.Contains(word))
                 {
-                    throw new RemovingNotExistingRecordException("Данная строка-шаблон отсуствует в банлисте", nameof(word));
+                    throw new RemovingNotExistingRecordException("Данная строка-шаблон отсутствует в банлисте", nameof(word));
                 }
                 chat.ForbiddenWords.Remove(word);
                 return _context.Chats.Update(chat);
             }
             return false;
         }
+
         public IEnumerable<PromotedMember> GetPromotedMembers(long chatId)
         {
             return _context.Chats.FindOne(chat => chat.ChatId == chatId)?.PromotedMembers;
         }
+
         public Chat AddPromotedMember(long chatId, User chatMember)
         {
             var chat = _context.Chats.FindOne(chat => chat.ChatId == chatId);
             if (chat != null)
             {
-                if(chat.PromotedMembers == null)
+                if (chat.PromotedMembers == null)
                 {
                     chat.PromotedMembers = new List<PromotedMember>();
                 }
                 if (chat.PromotedMembers.Any(member => member.UserId == chatMember.Id))
                 {
-                    throw new AddingDublicateRecord("Данный пользователь уже имеет бонусные привылегии.", nameof(chatMember.Id));
+                    throw new AddingDublicateRecord("Данный пользователь уже имеет дополнительные привилегии.", nameof(chatMember.Id));
                 }
 
                 var newPromotedUser = new PromotedMember
@@ -106,6 +110,7 @@ namespace DevSilenceKeeperBot.Services
                 return newChat;
             }
         }
+
         public bool RemovePromotedMember(long chatId, int userId)
         {
             var chat = _context.Chats.FindOne(c => c.ChatId == chatId);
@@ -113,9 +118,9 @@ namespace DevSilenceKeeperBot.Services
             {
                 if (!chat.PromotedMembers.Any(member => member.UserId == userId))
                 {
-                    throw new RemovingNotExistingRecordException("Данный пользователь не имел бонусных привелегий.", nameof(userId));
+                    throw new RemovingNotExistingRecordException("Данный пользователь не имел дополнительных привилегий.", nameof(userId));
                 }
-                var userForDelete = chat.PromotedMembers.FirstOrDefault(member => member.UserId == userId);
+                var userForDelete = chat.PromotedMembers.Find(member => member.UserId == userId);
                 chat.PromotedMembers.Remove(userForDelete);
                 return _context.Chats.Update(chat);
             }

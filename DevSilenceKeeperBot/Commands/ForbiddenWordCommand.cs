@@ -28,7 +28,7 @@ namespace DevSilenceKeeperBot.Commands
 
             var chatForbiddenWords = _chatService.GetChatForbiddenWords(message.Chat.Id);
 
-            if (chatForbiddenWords == null || chatForbiddenWords.Count() == 0)
+            if (chatForbiddenWords == null || !chatForbiddenWords.Any())
             {
                 return false;
             }
@@ -49,7 +49,7 @@ namespace DevSilenceKeeperBot.Commands
         public override async Task Execute(Message message, TelegramBotClient botClient)
         {
             var tasks = new List<Task>();
-            if (await message.From.IsAdmin(message.Chat.Id, botClient))
+            if (await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false))
             {
                 Task replyToAdminTask = botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
@@ -74,7 +74,7 @@ namespace DevSilenceKeeperBot.Commands
             }
 
             Task.WaitAll(tasks.ToArray());
-            await botClient.DeleteMessageAsync(message.Chat.Id, message.MessageId);
+            await botClient.DeleteMessageAsync(message.Chat.Id, message.MessageId).ConfigureAwait(false);
         }
     }
 }

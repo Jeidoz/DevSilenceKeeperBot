@@ -7,7 +7,7 @@ namespace DevSilenceKeeperBot.Extensions
         public static string RemoveSpecialCharacters(this string text)
         {
             var pattern = new Regex("[-:!@#$%^&*()}{|\":?><\\[\\]\\;'/.,~]");
-            return pattern.Replace(text, "").ToLower();
+            return pattern.Replace(text, string.Empty).ToLower();
         }
     }
 }
