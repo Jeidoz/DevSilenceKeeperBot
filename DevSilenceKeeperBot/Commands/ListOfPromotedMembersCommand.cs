@@ -27,7 +27,7 @@ namespace DevSilenceKeeperBot.Commands
             {
                 foreach (var member in promotedMemberIds)
                 {
-                    promotedMembers.Add($"[@{member.Username} \\({member.UserId}\\)](tg://user?id={member.UserId})");
+                    promotedMembers.Add($"[@{member.Username}](tg://user?id={member.UserId})");
                 }
             }
 
@@ -44,7 +44,7 @@ namespace DevSilenceKeeperBot.Commands
                 chatId: message.Chat.Id,
                 text: response,
                 replyToMessageId: message.MessageId,
-                parseMode: ParseMode.MarkdownV2);
+                parseMode: ParseMode.Markdown);
         }
     }
 }

@@ -73,7 +73,7 @@ namespace DevSilenceKeeperBot.Commands
                 chatId: message.Chat.Id,
                 text: response,
                 replyToMessageId: message.MessageId,
-                parseMode: ParseMode.MarkdownV2);
+                parseMode: ParseMode.Markdown);
         }
     }
 }
