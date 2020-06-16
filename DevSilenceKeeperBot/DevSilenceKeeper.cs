@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DevSilenceKeeperBot.Commands;
+using DevSilenceKeeperBot.Commands.Callback;
 using DevSilenceKeeperBot.Helpers;
 using DevSilenceKeeperBot.Logging;
 using DevSilenceKeeperBot.Services;
@@ -19,6 +20,7 @@ namespace DevSilenceKeeperBot
         private readonly IChatService _chatService;
 
         private readonly List<Command> _commands;
+        private readonly List<CallbackCommand> _callbackCommands;
         private readonly ILogger _logger;
         private readonly AppSettings _settings;
         private readonly CancellationTokenSource _tokenSource = new CancellationTokenSource();
@@ -31,11 +33,13 @@ namespace DevSilenceKeeperBot
             _settings = appSettingsReader.Read();
             _botClient = new TelegramBotClient(_settings.BotToken);
             _botClient.OnMessage += OnMessage;
+            _botClient.OnCallbackQuery += OnCallbackQuery;
 
             _chatService = chatService;
             _logger = logger;
 
             InitializeListOfBotCommands(out _commands);
+            InitializeListOfBotCallbackCommands(out _callbackCommands);
         }
 
         public void Run()
@@ -43,7 +47,10 @@ namespace DevSilenceKeeperBot
             try
             {
                 StartPolling();
-                while (!_tokenSource.IsCancellationRequested) Thread.Sleep(TimeSpan.FromMinutes(1));
+                while (!_tokenSource.IsCancellationRequested)
+                {
+                    Thread.Sleep(TimeSpan.FromMinutes(1));
+                }
                 StopPolling();
             }
             catch (Exception ex)
@@ -76,13 +83,22 @@ namespace DevSilenceKeeperBot
                 new PromoteMemberCommand(_chatService, _logger),
                 new UnpromoteMemberCommand(_chatService, _logger),
                 new MuteCommand(_chatService),
-                new UnmuteCommand(_chatService)
+                new UnmuteCommand(_chatService),
+                new VerifyNewChatMemberCommand()
+            };
+        }
+
+        private void InitializeListOfBotCallbackCommands(out List<CallbackCommand> commands)
+        {
+            commands = new List<CallbackCommand>
+            {
+                new ProveNewChatMemberCommand()
             };
         }
 
         private async void OnMessage(object sender, MessageEventArgs e)
         {
-            if (string.IsNullOrEmpty(e.Message.Text))
+            if (string.IsNullOrEmpty(e.Message.Text) && e.Message.NewChatMembers == null)
             {
                 return;
             }
@@ -90,10 +106,33 @@ namespace DevSilenceKeeperBot
             foreach (var command in _commands.Where(command => command.Contains(e.Message)))
             {
                 await command.Execute(e.Message, _botClient).ConfigureAwait(false);
-                _logger.Info(command is ForbiddenWordCommand
-                    ? $"{e.Message.From} нарушил правила чата: \"{e.Message.Text}\""
-                    : $"{e.Message.From} запросил команду {command.Triggers[0]}");
+                if (command is ForbiddenWordCommand)
+                {
+                    _logger.Info($"{e.Message.From} нарушил правила чата: \"{e.Message.Text}\"");
+                }
+                else
+                {
+                    string commandIdentifier = command.Triggers != null 
+                        ? command.Triggers.First() 
+                        : command.GetType().Name;
+                    _logger.Info($"{e.Message.From} запросил команду {commandIdentifier}");   
+                }
 
+                return;
+            }
+        }
+        
+        private async void OnCallbackQuery(object sender, CallbackQueryEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e.CallbackQuery.Data))
+            {
+                return;
+            }
+            
+            foreach (var command in _callbackCommands.Where(command => command.Contains(e.CallbackQuery)))
+            {
+                await command.Execute(e.CallbackQuery, _botClient).ConfigureAwait(false);
+                _logger.Info($"{e.CallbackQuery.From} запросил callback команду {command.Triggers[0] ?? command.GetType().Name}");
                 return;
             }
         }
