@@ -21,6 +21,15 @@ namespace DevSilenceKeeperBot.Commands
 
         public override async Task Execute(Message message, TelegramBotClient botClient)
         {
+            if (message.ReplyToMessage.From.Id == botClient.BotId)
+            {
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: "Я не дурак, что бы мутить самого себя ಠ_ಠ...",
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
+                return;
+            }
+
             var promotedMembers = _chatService.GetPromotedMembers(message.Chat.Id);
             bool isAdmin = await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false);
             bool isPromotedChatMember = promotedMembers?.Any(member => member.UserId == message.From.Id) == true;
@@ -63,7 +72,7 @@ namespace DevSilenceKeeperBot.Commands
                 untilDate: muteUntilDate);
             Task reportMute = botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: $"{message.ReplyToMessage.From} замучен до {muteUntilDate:dd.MM.yyyy hh:mm:ss}",
+                text: $"{message.ReplyToMessage.From} замучен до {muteUntilDate:dd.MM.yyyy HH:mm:ss} (UTC+02:00)",
                 replyToMessageId: message.MessageId);
 
             Task.WaitAll(new Task[] { muteChatMember, reportMute });
@@ -92,7 +101,7 @@ namespace DevSilenceKeeperBot.Commands
                 }
                 throw new ArgumentException("Вот давай без мута в прошлое.");
             }
-            throw new ArgumentException("Дай TimeSpan в формате [d.]hh:mm[:ss[.ff]]! Я же робот, а не человек (╯°□°）╯︵ ┻━┻");
+            throw new ArgumentException("Дай TimeSpan в формате [d.]HH:mm[:ss[.ff]]! Я же робот, а не человек (╯°□°）╯︵ ┻━┻");
         }
     }
 }
