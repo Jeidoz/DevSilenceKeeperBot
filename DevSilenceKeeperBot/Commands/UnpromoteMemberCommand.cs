@@ -1,9 +1,9 @@
-﻿using DevSilenceKeeperBot.Exceptions;
+﻿using System;
+using System.Threading.Tasks;
+using DevSilenceKeeperBot.Exceptions;
 using DevSilenceKeeperBot.Extensions;
 using DevSilenceKeeperBot.Logging;
 using DevSilenceKeeperBot.Services;
-using System;
-using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -14,7 +14,6 @@ namespace DevSilenceKeeperBot.Commands
     {
         private readonly IChatService _chatService;
         private readonly ILogger _logger;
-        public override string[] Triggers => new string[] { "/unpromote" };
 
         public UnpromoteMemberCommand(IChatService chatService, ILogger logger)
         {
@@ -22,12 +21,14 @@ namespace DevSilenceKeeperBot.Commands
             _logger = logger;
         }
 
+        public override string[] Triggers => new[] {"/unpromote"};
+
         public override async Task Execute(Message message, TelegramBotClient botClient)
         {
             if (!await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false))
             {
                 await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
+                    message.Chat.Id,
                     text: "Надавать привилегии могут только модераторы!",
                     replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
@@ -36,7 +37,7 @@ namespace DevSilenceKeeperBot.Commands
             if (string.IsNullOrEmpty(message.ReplyToMessage.Text))
             {
                 await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
+                    message.Chat.Id,
                     text: "Для понижения привилегий, нужно делать Reply на сообщение участника чата.",
                     replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
@@ -45,14 +46,15 @@ namespace DevSilenceKeeperBot.Commands
             if (message.ReplyToMessage.From == message.From)
             {
                 await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
+                    message.Chat.Id,
                     text: "Понижать самого себя любимого как-то неправильно...",
                     replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
             }
 
             string response;
-            string usernameMarkup = $"[@{message.ReplyToMessage.From.Username}](tg://user?id={message.ReplyToMessage.From.Id})";
+            string usernameMarkup =
+                $"[@{message.ReplyToMessage.From.Username}](tg://user?id={message.ReplyToMessage.From.Id})";
             try
             {
                 _chatService.RemovePromotedMember(message.Chat.Id, message.ReplyToMessage.From.Id);
@@ -61,7 +63,8 @@ namespace DevSilenceKeeperBot.Commands
             catch (RemovingNotExistingRecordException)
             {
                 response = $"{usernameMarkup}, ты и так обычный смертный ಠ\\_ಠ";
-                _logger.Warning($"[{nameof(RemovingNotExistingRecordException)}]: Chat: {message.Chat}; Invoker: {message.From}; Text: \"{message.Text}\"");
+                _logger.Warning(
+                    $"[{nameof(RemovingNotExistingRecordException)}]: Chat: {message.Chat}; Invoker: {message.From}; Text: \"{message.Text}\"");
             }
             catch (Exception ex)
             {
@@ -70,8 +73,8 @@ namespace DevSilenceKeeperBot.Commands
             }
 
             await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: response,
+                message.Chat.Id,
+                response,
                 replyToMessageId: message.MessageId,
                 parseMode: ParseMode.Markdown).ConfigureAwait(false);
         }

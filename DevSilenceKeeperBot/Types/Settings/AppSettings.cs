@@ -1,4 +1,6 @@
-﻿namespace DevSilenceKeeperBot.Types.Settings
+﻿// ReSharper disable UnusedAutoPropertyAccessor.Global
+
+namespace DevSilenceKeeperBot.Types.Settings
 {
     public sealed class AppSettings
     {

@@ -5,20 +5,17 @@ namespace DevSilenceKeeperBot.Data
 {
     public sealed class DbContext : IDbContext
     {
-        private readonly ILiteDatabase _db;
-
-        public ILiteCollection<Chat> Chats { get; }
-
         public DbContext(string dbFilename)
         {
-            _db = new LiteDatabase(dbFilename);
-            Chats = _db.GetCollection<Chat>("chats");
+            ILiteDatabase db = new LiteDatabase(dbFilename);
+            Chats = db.GetCollection<Chat>(name: "chats");
         }
 
         public DbContext(ILiteDatabase database)
         {
-            _db = database;
-            Chats = _db.GetCollection<Chat>("chats");
+            Chats = database.GetCollection<Chat>(name: "chats");
         }
+
+        public ILiteCollection<Chat> Chats { get; }
     }
 }

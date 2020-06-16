@@ -114,7 +114,7 @@ namespace DevSilenceKeeperBot.Tests
 
             Action testingAction = () => chatService.AddChatForbiddenWord(1, "t.me/");
 
-            Assert.Throws<AddingDublicateRecord>(testingAction);
+            Assert.Throws<AddingDuplicateRecord>(testingAction);
         }
         #endregion
 

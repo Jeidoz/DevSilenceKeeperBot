@@ -14,7 +14,7 @@ namespace DevSilenceKeeperBot.Commands
 
         public virtual bool Contains(Message message)
         {
-            bool? isCommandType = message.Entities
+            var isCommandType = message.Entities
                 ?.Any(entity => entity.Type == MessageEntityType.BotCommand);
             if (message.Type != MessageType.Text || isCommandType == false)
             {

@@ -1,9 +1,9 @@
-﻿using DevSilenceKeeperBot.Extensions;
-using DevSilenceKeeperBot.Services;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DevSilenceKeeperBot.Extensions;
+using DevSilenceKeeperBot.Services;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
@@ -12,12 +12,14 @@ namespace DevSilenceKeeperBot.Commands
     public sealed class ForbiddenWordCommand : Command
     {
         private readonly IChatService _chatService;
-        public override string[] Triggers { get; }
 
         public ForbiddenWordCommand(IChatService chatService)
         {
             _chatService = chatService;
+            Triggers = null;
         }
+
+        public override string[] Triggers { get; }
 
         public override bool Contains(Message message)
         {
@@ -26,14 +28,20 @@ namespace DevSilenceKeeperBot.Commands
                 return false;
             }
 
-            var chatForbiddenWords = _chatService.GetChatForbiddenWords(message.Chat.Id);
+            var chatForbiddenWords = _chatService
+                .GetChatForbiddenWords(message.Chat.Id)
+                .ToArray();
 
-            if (chatForbiddenWords == null || !chatForbiddenWords.Any())
+            if (!chatForbiddenWords.Any())
             {
                 return false;
             }
 
-            if (message.Entities != null)
+            if (message.Entities == null)
+            {
+                return chatForbiddenWords.Any(word => message.Text.Contains(word));
+            }
+
             {
                 if (message.Entities
                     .Any(entity => chatForbiddenWords
@@ -52,25 +60,25 @@ namespace DevSilenceKeeperBot.Commands
             if (await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false))
             {
                 Task replyToAdminTask = botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    text: $"Модератор {message.From} нарушает правила чата!",
+                    message.Chat.Id,
+                    $"Модератор {message.From} нарушает правила чата!",
                     replyToMessageId: message.MessageId);
                 tasks.Add(replyToAdminTask);
             }
             else
             {
-                DateTime until = DateTime.Now.AddSeconds(31);
-                Task kickChatMemberTask = botClient.KickChatMemberAsync(
-                    chatId: message.Chat.Id,
-                    userId: message.From.Id,
-                    untilDate: until);
+                var until = DateTime.Now.AddSeconds(31);
+                var kickChatMemberTask = botClient.KickChatMemberAsync(
+                    message.Chat.Id,
+                    message.From.Id,
+                    until);
 
                 Task reportAboutKickTask = botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    text: $"Пользователь {message.From} нарушил правила чата!",
+                    message.Chat.Id,
+                    $"Пользователь {message.From} нарушил правила чата!",
                     replyToMessageId: message.MessageId);
 
-                tasks.AddRange(new List<Task> { kickChatMemberTask, reportAboutKickTask });
+                tasks.AddRange(new List<Task> {kickChatMemberTask, reportAboutKickTask});
             }
 
             Task.WaitAll(tasks.ToArray());

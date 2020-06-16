@@ -1,8 +1,8 @@
-﻿using DevSilenceKeeperBot.Extensions;
-using DevSilenceKeeperBot.Services;
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using DevSilenceKeeperBot.Extensions;
+using DevSilenceKeeperBot.Services;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
@@ -10,21 +10,22 @@ namespace DevSilenceKeeperBot.Commands
 {
     public sealed class MuteCommand : Command
     {
-        private readonly TimeSpan _defaultMuteDuration = TimeSpan.FromDays(1);
         private readonly IChatService _chatService;
-        public override string[] Triggers => new string[] { "/mute" };
+        private readonly TimeSpan _defaultMuteDuration = TimeSpan.FromDays(1);
 
         public MuteCommand(IChatService chatService)
         {
             _chatService = chatService;
         }
 
+        public override string[] Triggers => new[] {"/mute"};
+
         public override async Task Execute(Message message, TelegramBotClient botClient)
         {
             if (message.ReplyToMessage.From.Id == botClient.BotId)
             {
                 await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
+                    message.Chat.Id,
                     text: "Я не дурак, что бы мутить самого себя ಠ_ಠ...",
                     replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
@@ -36,7 +37,7 @@ namespace DevSilenceKeeperBot.Commands
             if (!(isAdmin || isPromotedChatMember))
             {
                 await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
+                    message.Chat.Id,
                     text: "Мутить могут только модераторы и участники чата с привилегиями!",
                     replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
@@ -46,12 +47,13 @@ namespace DevSilenceKeeperBot.Commands
             if (isAdmin)
             {
                 await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
+                    message.Chat.Id,
                     text: "Ну тут наши полномочия всё. Админа замутить не имею права...",
                     replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
             }
-            TimeSpan muteDuration = _defaultMuteDuration;
+
+            var muteDuration = _defaultMuteDuration;
             try
             {
                 muteDuration = GetMuteDuration(message.Text);
@@ -59,31 +61,32 @@ namespace DevSilenceKeeperBot.Commands
             catch (ArgumentException ex)
             {
                 await botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    text: ex.Message,
+                    message.Chat.Id,
+                    ex.Message,
                     replyToMessageId: message.MessageId).ConfigureAwait(false);
                 return;
             }
-            DateTime muteUntilDate = DateTime.Now + muteDuration;
-            Task muteChatMember = botClient.RestrictChatMemberAsync(
-                chatId: message.Chat.Id,
-                userId: message.ReplyToMessage.From.Id,
-                permissions: new ChatPermissions { CanSendMessages = false },
-                untilDate: muteUntilDate);
+
+            var muteUntilDate = DateTime.Now + muteDuration;
+            var muteChatMember = botClient.RestrictChatMemberAsync(
+                message.Chat.Id,
+                message.ReplyToMessage.From.Id,
+                new ChatPermissions {CanSendMessages = false},
+                muteUntilDate);
             Task reportMute = botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: $"{message.ReplyToMessage.From} замучен до {muteUntilDate:dd.MM.yyyy HH:mm:ss} (UTC+02:00)",
+                message.Chat.Id,
+                $"{message.ReplyToMessage.From} замучен до {muteUntilDate:dd.MM.yyyy HH:mm:ss} (UTC+02:00)",
                 replyToMessageId: message.MessageId);
 
-            Task.WaitAll(new Task[] { muteChatMember, reportMute });
+            Task.WaitAll(muteChatMember, reportMute);
             await botClient.DeleteMessageAsync(
-                chatId: message.Chat.Id,
-                messageId: message.ReplyToMessage.MessageId).ConfigureAwait(false);
+                message.Chat.Id,
+                message.ReplyToMessage.MessageId).ConfigureAwait(false);
         }
 
         private TimeSpan GetMuteDuration(string commandArgs)
         {
-            var muteDurationString = commandArgs
+            string muteDurationString = commandArgs
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries)
                 .Skip(1).FirstOrDefault();
 
@@ -92,16 +95,19 @@ namespace DevSilenceKeeperBot.Commands
                 return _defaultMuteDuration;
             }
 
-            bool isParsed = TimeSpan.TryParse(muteDurationString, out TimeSpan muteDuration);
-            if (isParsed)
+            bool isParsed = TimeSpan.TryParse(muteDurationString, out var muteDuration);
+            if (!isParsed)
             {
-                if (muteDuration > TimeSpan.Zero)
-                {
-                    return muteDuration;
-                }
-                throw new ArgumentException("Вот давай без мута в прошлое.");
+                throw new ArgumentException(
+                    message: "Дай TimeSpan в формате [d.]HH:mm[:ss[.ff]]! Я же робот, а не человек (╯°□°）╯︵ ┻━┻");
             }
-            throw new ArgumentException("Дай TimeSpan в формате [d.]HH:mm[:ss[.ff]]! Я же робот, а не человек (╯°□°）╯︵ ┻━┻");
+
+            if (muteDuration > TimeSpan.Zero)
+            {
+                return muteDuration;
+            }
+
+            throw new ArgumentException(message: "Вот давай без мута в прошлое.");
         }
     }
 }

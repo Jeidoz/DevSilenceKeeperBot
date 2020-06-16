@@ -1,26 +1,27 @@
-﻿using DevSilenceKeeperBot.Commands;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using DevSilenceKeeperBot.Commands;
 using DevSilenceKeeperBot.Helpers;
 using DevSilenceKeeperBot.Logging;
 using DevSilenceKeeperBot.Services;
 using DevSilenceKeeperBot.Types.Settings;
-using System;
-using System.Collections.Generic;
-using System.Threading;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 
 namespace DevSilenceKeeperBot
 {
+    // ReSharper disable once UnusedType.Global
     public sealed class DevSilenceKeeper : IDevSilenceKeeper
     {
-        private readonly CancellationTokenSource _tokenSource = new CancellationTokenSource();
-
         private readonly TelegramBotClient _botClient;
         private readonly IChatService _chatService;
-        private readonly ILogger _logger;
-        private readonly AppSettings _settings;
 
         private readonly List<Command> _commands;
+        private readonly ILogger _logger;
+        private readonly AppSettings _settings;
+        private readonly CancellationTokenSource _tokenSource = new CancellationTokenSource();
 
         public DevSilenceKeeper(
             IAppSettingsReader appSettingsReader,
@@ -35,6 +36,29 @@ namespace DevSilenceKeeperBot
             _logger = logger;
 
             InitializeListOfBotCommands(out _commands);
+        }
+
+        public void Run()
+        {
+            try
+            {
+                StartPolling();
+                while (!_tokenSource.IsCancellationRequested) Thread.Sleep(TimeSpan.FromMinutes(1));
+                StopPolling();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(value: "Во время роботы случилась ошибка:");
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.Source);
+                Console.WriteLine(ex.StackTrace);
+                Console.WriteLine(ex.InnerException);
+            }
+        }
+
+        public void Cancel()
+        {
+            _tokenSource.Cancel();
         }
 
         private void InitializeListOfBotCommands(out List<Command> commands)
@@ -63,42 +87,13 @@ namespace DevSilenceKeeperBot
                 return;
             }
 
-            foreach (var command in _commands)
+            foreach (var command in _commands.Where(command => command.Contains(e.Message)))
             {
-                if (command.Contains(e.Message))
-                {
-                    await command.Execute(e.Message, _botClient).ConfigureAwait(false);
-                    if (command is ForbiddenWordCommand)
-                    {
-                        _logger.Info($"{e.Message.From} нарушил правила чата: \"{e.Message.Text}\"");
-                    }
-                    else
-                    {
-                        _logger.Info($"{e.Message.From} запросил команду {command.Triggers[0]}");
-                    }
-                    return;
-                }
-            }
-        }
+                await command.Execute(e.Message, _botClient).ConfigureAwait(false);
+                _logger.Info(command is ForbiddenWordCommand
+                    ? $"{e.Message.From} нарушил правила чата: \"{e.Message.Text}\""
+                    : $"{e.Message.From} запросил команду {command.Triggers[0]}");
 
-        public void Run()
-        {
-            try
-            {
-                StartPolling();
-                while (!_tokenSource.IsCancellationRequested)
-                {
-                    Thread.Sleep(TimeSpan.FromMinutes(1));
-                }
-                StopPolling();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Во время роботы случилась ошибка:");
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(ex.Source);
-                Console.WriteLine(ex.StackTrace);
-                Console.WriteLine(ex.InnerException);
                 return;
             }
         }
@@ -106,18 +101,13 @@ namespace DevSilenceKeeperBot
         private void StartPolling()
         {
             _botClient.StartReceiving();
-            _logger.Info("Бот начал обрабатывать сообщения...");
+            _logger.Info(text: "Бот начал обрабатывать сообщения...");
         }
 
         private void StopPolling()
         {
             _botClient.StopReceiving();
-            _logger.Info("Бот прекратил работу...");
-        }
-
-        public void Cancel()
-        {
-            _tokenSource.Cancel();
+            _logger.Info(text: "Бот прекратил работу...");
         }
     }
 }

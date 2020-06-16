@@ -6,12 +6,12 @@ namespace DevSilenceKeeperBot.Commands
 {
     public sealed class HelpCommand : Command
     {
-        public override string[] Triggers => new string[] { "/help" };
+        public override string[] Triggers => new[] {"/help"};
 
         public override async Task Execute(Message message, TelegramBotClient botClient)
         {
             string response = string.Format(
-                "Список команд:\n{0}\n{1}\n{2}\n{3}\n{4}\n{5}\n{6}\n{7}\n{8}\n{9}\n{10}",
+                format: "Список команд:\n{0}\n{1}\n{2}\n{3}\n{4}\n{5}\n{6}\n{7}\n{8}\n{9}\n{10}",
                 "/help – показать помощь",
                 "/words – показать запрещенные строки-шаблоны",
                 "/templates – альтернатива /words",
@@ -24,8 +24,8 @@ namespace DevSilenceKeeperBot.Commands
                 "/promote - наддать привилегии особого участника чата",
                 "/unpromote - забрать привилегии особого участника чата");
             await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: response,
+                message.Chat.Id,
+                response,
                 replyToMessageId: message.MessageId).ConfigureAwait(false);
         }
     }

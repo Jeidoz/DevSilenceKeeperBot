@@ -1,11 +1,12 @@
-﻿using DevSilenceKeeperBot.Exceptions;
+﻿using System.IO;
+using System.Text;
+using DevSilenceKeeperBot.Exceptions;
 using DevSilenceKeeperBot.Types.Settings;
 using Newtonsoft.Json;
-using System.IO;
-using System.Text;
 
 namespace DevSilenceKeeperBot.Helpers
 {
+    // ReSharper disable once UnusedType.Global
     public sealed class AppSettingsReader : IAppSettingsReader
     {
         public AppSettings Read()
@@ -13,12 +14,14 @@ namespace DevSilenceKeeperBot.Helpers
             string json;
             try
             {
-                json = File.ReadAllText("appSettings.json", Encoding.UTF8);
+                json = File.ReadAllText(path: "appSettings.json", Encoding.UTF8);
             }
             catch (FileNotFoundException)
             {
-                throw new MissingAppSettingsFileException("appSettings.json file is missing in the app folder");
+                throw new MissingAppSettingsFileException(
+                    message: "appSettings.json file is missing in the app folder");
             }
+
             return JsonConvert.DeserializeObject<AppSettings>(json);
         }
     }

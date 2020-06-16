@@ -1,6 +1,6 @@
-﻿using DevSilenceKeeperBot.Data;
+﻿using System;
+using DevSilenceKeeperBot.Data;
 using StructureMap;
-using System;
 
 namespace DevSilenceKeeperBot
 {

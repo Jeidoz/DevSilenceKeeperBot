@@ -1,6 +1,7 @@
-﻿using DevSilenceKeeperBot.Services;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using DevSilenceKeeperBot.Services;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -10,23 +11,22 @@ namespace DevSilenceKeeperBot.Commands
     public sealed class ListOfPromotedMembersCommand : Command
     {
         private readonly IChatService _chatService;
-        public override string[] Triggers => new string[] { "/promoted", "/users" };
 
         public ListOfPromotedMembersCommand(IChatService chatService)
         {
             _chatService = chatService;
         }
 
+        public override string[] Triggers => new[] {"/promoted", "/users"};
+
         public override async Task Execute(Message message, TelegramBotClient botClient)
         {
             var promotedMemberIds = _chatService.GetPromotedMembers(message.Chat.Id);
-            List<string> promotedMembers = new List<string>();
+            var promotedMembers = new List<string>();
             if (promotedMemberIds != null)
             {
-                foreach (var member in promotedMemberIds)
-                {
-                    promotedMembers.Add($"[@{member.Username}](tg://user?id={member.UserId})");
-                }
+                promotedMembers.AddRange(promotedMemberIds
+                    .Select(member => $"[@{member.Username}](tg://user?id={member.UserId})"));
             }
 
             string response;
@@ -36,11 +36,12 @@ namespace DevSilenceKeeperBot.Commands
             }
             else
             {
-                response = "В данном чате отсуствуют участники с привилегиями\\.";
+                response = "В данном чате отсутствуют участники с привилегиями\\.";
             }
+
             await botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: response,
+                message.Chat.Id,
+                response,
                 replyToMessageId: message.MessageId,
                 parseMode: ParseMode.Markdown).ConfigureAwait(false);
         }

@@ -1,5 +1,5 @@
-﻿using DevSilenceKeeperBot.Entities;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using DevSilenceKeeperBot.Entities;
 using Telegram.Bot.Types;
 using Chat = DevSilenceKeeperBot.Entities.Chat;
 

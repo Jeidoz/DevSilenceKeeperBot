@@ -1,6 +1,6 @@
-﻿using DevSilenceKeeperBot.Logging;
+﻿using System.Diagnostics;
+using DevSilenceKeeperBot.Logging;
 using StructureMap;
-using System.Diagnostics;
 
 namespace DevSilenceKeeperBot.Data
 {
@@ -11,16 +11,16 @@ namespace DevSilenceKeeperBot.Data
             Scan(scan =>
             {
                 scan.TheCallingAssembly();
-                scan.Exclude(type => type.Namespace.Contains("LiteDb"));
+                scan.Exclude(type => type.Namespace != null && type.Namespace.Contains(value: "LiteDb"));
                 scan.WithDefaultConventions();
             });
 
-            // Database's filename = Current app name + .db
+            // Database filename = Current app name + .db
             For<IDbContext>()
                 .Singleton()
                 .Use<DbContext>()
-                .Ctor<string>("dbFilename")
-                    .Is($"{Process.GetCurrentProcess().ProcessName}.db");
+                .Ctor<string>(constructorArg: "dbFilename")
+                .Is($"{Process.GetCurrentProcess().ProcessName}.db");
 
             For<ILogger>().Use<ConsoleLogger>();
         }
