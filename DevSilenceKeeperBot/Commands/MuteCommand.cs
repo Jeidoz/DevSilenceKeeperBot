@@ -5,6 +5,7 @@ using DevSilenceKeeperBot.Extensions;
 using DevSilenceKeeperBot.Services;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace DevSilenceKeeperBot.Commands
@@ -54,8 +55,8 @@ namespace DevSilenceKeeperBot.Commands
                 return;
             }
 
-            isAdmin = await message.ReplyToMessage.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false);
-            if (isAdmin)
+            var chatMemberDetails = await botClient.GetChatMemberAsync(message.Chat.Id, message.ReplyToMessage.From.Id);
+            if (chatMemberDetails.Status == ChatMemberStatus.Administrator)
             {
                 await botClient.SendTextMessageAsync(
                     message.Chat.Id,
