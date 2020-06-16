@@ -5,6 +5,7 @@ using DevSilenceKeeperBot.Extensions;
 using DevSilenceKeeperBot.Services;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace DevSilenceKeeperBot.Commands
 {
@@ -35,8 +36,9 @@ namespace DevSilenceKeeperBot.Commands
             {
                 await botClient.SendTextMessageAsync(
                     message.Chat.Id,
-                    text: "Скоро тут будет кнопочка для подтверждения, а щас так нельзя...",
-                    replyToMessageId: message.MessageId).ConfigureAwait(false);
+                    text: "Мутить самого-себя как-то неправильно...",
+                    replyToMessageId: message.MessageId)
+                    .ConfigureAwait(false);
                 return;
             }
 
