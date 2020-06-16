@@ -17,6 +17,11 @@ namespace DevSilenceKeeperBot.Commands
 
         public override bool Contains(Message message)
         {
+            if (message.NewChatMembers == null)
+            {
+                return false;
+            }
+            
             return message.NewChatMembers.Length > 0;
         }
 
