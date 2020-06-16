@@ -6,6 +6,10 @@ namespace DevSilenceKeeperBot.Extensions
     {
         public static string RemoveSpecialCharacters(this string text)
         {
+            if (string.IsNullOrEmpty(text))
+            {
+                return string.Empty;
+            }
             var pattern = new Regex(pattern: "[-:!@#$%^&*()}{|\":?><\\[\\]\\;'/.,~]");
             return pattern.Replace(text, string.Empty).ToLower();
         }
