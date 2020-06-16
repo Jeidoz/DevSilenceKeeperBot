@@ -31,6 +31,15 @@ namespace DevSilenceKeeperBot.Commands
                 return;
             }
 
+            if (message.ReplyToMessage.From.Id == message.From.Id)
+            {
+                await botClient.SendTextMessageAsync(
+                    message.Chat.Id,
+                    text: "Скоро тут будет кнопочка для подтверждения, а щас так нельзя...",
+                    replyToMessageId: message.MessageId).ConfigureAwait(false);
+                return;
+            }
+
             var promotedMembers = _chatService.GetPromotedMembers(message.Chat.Id);
             bool isAdmin = await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false);
             bool isPromotedChatMember = promotedMembers?.Any(member => member.UserId == message.From.Id) == true;
@@ -53,7 +62,7 @@ namespace DevSilenceKeeperBot.Commands
                 return;
             }
 
-            var muteDuration = _defaultMuteDuration;
+            TimeSpan muteDuration;
             try
             {
                 muteDuration = GetMuteDuration(message.Text);
