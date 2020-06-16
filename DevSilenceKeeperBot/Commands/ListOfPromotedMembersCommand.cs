@@ -36,7 +36,7 @@ namespace DevSilenceKeeperBot.Commands
             }
             else
             {
-                response = "В данном чате отсутствуют участники с привилегиями\\.";
+                response = "В данном чате отсутствуют участники с привилегиями.";
             }
 
             await botClient.SendTextMessageAsync(
