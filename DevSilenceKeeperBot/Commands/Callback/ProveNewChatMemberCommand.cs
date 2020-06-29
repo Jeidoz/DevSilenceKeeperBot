@@ -22,7 +22,9 @@ namespace DevSilenceKeeperBot.Commands.Callback
                 CanSendMessages = true,
                 CanSendMediaMessages = true,
                 CanSendOtherMessages = true,
-                CanSendPolls = true
+                CanSendPolls = true,
+                CanAddWebPagePreviews = true,
+                CanInviteUsers = true
             };
 
             await botClient.RestrictChatMemberAsync(
