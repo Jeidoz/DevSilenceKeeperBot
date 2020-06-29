@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using DevSilenceKeeperBot.Exceptions;
 using DevSilenceKeeperBot.Extensions;
@@ -25,7 +26,10 @@ namespace DevSilenceKeeperBot.Commands
 
         public override async Task Execute(Message message, TelegramBotClient botClient)
         {
-            if (!await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false))
+            var promotedMembers = _chatService.GetPromotedMembers(message.Chat.Id);
+            bool isAdmin = await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false);
+            bool isPromotedChatMember = promotedMembers?.Any(member => member.UserId == message.From.Id) == true;
+            if (!(isAdmin || isPromotedChatMember))
             {
                 await botClient.SendTextMessageAsync(
                     message.Chat.Id,
