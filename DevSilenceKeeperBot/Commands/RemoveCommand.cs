@@ -17,7 +17,7 @@ namespace DevSilenceKeeperBot.Commands
             _chatService = chatService;
         }
 
-        public override string[] Triggers => new[] {"/del", "/rm", "/delete", "/remove"};
+        public override string[] Triggers => new[] {"/rm", "/remove"};
 
         public override async Task Execute(Message message, TelegramBotClient botClient)
         {

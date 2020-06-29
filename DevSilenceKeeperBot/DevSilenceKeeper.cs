@@ -84,7 +84,8 @@ namespace DevSilenceKeeperBot
                 new UnpromoteMemberCommand(_chatService, _logger),
                 new MuteCommand(_chatService),
                 new UnmuteCommand(_chatService),
-                new VerifyNewChatMemberCommand()
+                new VerifyNewChatMemberCommand(),
+                new DeleteMessageCommand(_chatService)
             };
         }
 

@@ -16,7 +16,7 @@ namespace DevSilenceKeeperBot.Commands
                                     "/templates – альтернатива /words\n" +
                                     "/add – добавить запрещенную строку-шаблон\n" +
                                     "/remove (/rm) – убрать запрещенную строку-шаблон\n" +
-                                    "/delete (/del) – альтернатива /remove\n" +
+                                    "/delete (/del) – удалить сообщение\n" +
                                     "/users (/promoted) – список участников с привилегиями\n" +
                                     "/mute [d.]HH:mm[:ss] - замутить участника на определенный срок\n" +
                                     "/unmute - розмутить участника\n" +
