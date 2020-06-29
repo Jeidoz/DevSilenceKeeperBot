@@ -5,8 +5,6 @@ using DevSilenceKeeperBot.Extensions;
 using DevSilenceKeeperBot.Services;
 using Telegram.Bot;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.ReplyMarkups;
 
 namespace DevSilenceKeeperBot.Commands
 {
@@ -24,44 +22,35 @@ namespace DevSilenceKeeperBot.Commands
 
         public override async Task Execute(Message message, TelegramBotClient botClient)
         {
-            if (message.ReplyToMessage.From.Id == botClient.BotId)
+            if (message.ReplyToMessage is null)
             {
-                await botClient.SendTextMessageAsync(
-                    message.Chat.Id,
-                    text: "Я не дурак, что бы мутить самого себя ಠ_ಠ...",
-                    replyToMessageId: message.MessageId).ConfigureAwait(false);
+                await SendTextResponse("Вызывать мут без цели это признак дурачины ಠ_ಠ...", message, botClient);
+                return;
+            }
+            
+            if (IsItAnAttemptToMuteBotByYourself(message, botClient))
+            {
+                await SendTextResponse("Я не дурак, что бы мутить самого себя ಠ_ಠ...", message, botClient);
                 return;
             }
 
-            if (message.ReplyToMessage.From.Id == message.From.Id)
+            if (IsItAnAttemptToMuteChatMemberByYourself(message))
             {
-                await botClient.SendTextMessageAsync(
-                    message.Chat.Id,
-                    text: "Мутить самого-себя как-то неправильно...",
-                    replyToMessageId: message.MessageId)
-                    .ConfigureAwait(false);
+                await SendTextResponse("Мутить самого-себя как-то неправильно...", message, botClient);
                 return;
             }
 
-            var promotedMembers = _chatService.GetPromotedMembers(message.Chat.Id);
-            bool isAdmin = await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false);
-            bool isPromotedChatMember = promotedMembers?.Any(member => member.UserId == message.From.Id) == true;
-            if (!(isAdmin || isPromotedChatMember))
+            if(await IsChatMemberHaveRightsToMute(message, botClient) == false)
             {
-                await botClient.SendTextMessageAsync(
-                    message.Chat.Id,
-                    text: "Мутить могут только модераторы и участники чата с привилегиями!",
-                    replyToMessageId: message.MessageId).ConfigureAwait(false);
+                await SendTextResponse("Мутить могут только модераторы и участники чата с привилегиями!", message,
+                    botClient);
                 return;
             }
-
-            var chatMemberDetails = await botClient.GetChatMemberAsync(message.Chat.Id, message.ReplyToMessage.From.Id);
-            if (chatMemberDetails.Status == ChatMemberStatus.Administrator)
+            
+            if (await message.ReplyToMessage.From.IsAdmin(message.Chat.Id, botClient))
             {
-                await botClient.SendTextMessageAsync(
-                    message.Chat.Id,
-                    text: "Ну тут наши полномочия всё. Админа замутить не имею права...",
-                    replyToMessageId: message.MessageId).ConfigureAwait(false);
+                await SendTextResponse("Ну тут наши полномочия всё. Админа замутить не имею права...", message,
+                    botClient);
                 return;
             }
 
@@ -72,15 +61,12 @@ namespace DevSilenceKeeperBot.Commands
             }
             catch (ArgumentException ex)
             {
-                await botClient.SendTextMessageAsync(
-                    message.Chat.Id,
-                    ex.Message,
-                    replyToMessageId: message.MessageId).ConfigureAwait(false);
+                await SendTextResponse(ex.Message, message, botClient);
                 return;
             }
 
             var muteUntilDate = DateTime.Now + muteDuration;
-            var muteChatMember = botClient.RestrictChatMemberAsync(
+            Task muteChatMember = botClient.RestrictChatMemberAsync(
                 message.Chat.Id,
                 message.ReplyToMessage.From.Id,
                 new ChatPermissions {CanSendMessages = false},
@@ -94,6 +80,33 @@ namespace DevSilenceKeeperBot.Commands
             await botClient.DeleteMessageAsync(
                 message.Chat.Id,
                 message.ReplyToMessage.MessageId).ConfigureAwait(false);
+        }
+
+        private bool IsItAnAttemptToMuteBotByYourself(Message message, TelegramBotClient botClient)
+        {
+            return message.ReplyToMessage.From.Id == botClient.BotId;
+        }
+
+        private bool IsItAnAttemptToMuteChatMemberByYourself(Message message)
+        {
+            return message.ReplyToMessage.From.Id == message.From.Id;
+        }
+
+        private async Task<bool> IsChatMemberHaveRightsToMute(Message message, TelegramBotClient botClient)
+        {
+            var promotedMembers = _chatService.GetPromotedMembers(message.Chat.Id);
+            bool isAdmin = await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false);
+            bool isPromotedChatMember = promotedMembers?.Any(member => member.UserId == message.From.Id) == true;
+            return isAdmin || isPromotedChatMember;
+        }
+
+        private static async Task SendTextResponse(string text, Message replyToMessage, TelegramBotClient botClient)
+        {
+            await botClient.SendTextMessageAsync(
+                replyToMessage.Chat.Id,
+                text,
+                replyToMessageId: replyToMessage.MessageId)
+                .ConfigureAwait(false);
         }
 
         private TimeSpan GetMuteDuration(string commandArgs)
