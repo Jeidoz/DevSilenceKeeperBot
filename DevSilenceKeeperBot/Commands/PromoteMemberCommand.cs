@@ -62,7 +62,7 @@ namespace DevSilenceKeeperBot.Commands
             try
             {
                 _chatService.AddPromotedMember(message.Chat.Id, message.ReplyToMessage.From);
-                response = $"{usernameMarkup}, поздравляю из повышением\\!";
+                response = $"{usernameMarkup}, поздравляю с повышением!";
             }
             catch (AddingDuplicateRecord)
             {
