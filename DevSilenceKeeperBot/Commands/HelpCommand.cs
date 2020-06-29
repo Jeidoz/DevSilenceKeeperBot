@@ -10,19 +10,18 @@ namespace DevSilenceKeeperBot.Commands
 
         public override async Task Execute(Message message, TelegramBotClient botClient)
         {
-            string response = string.Format(
-                format: "Список команд:\n{0}\n{1}\n{2}\n{3}\n{4}\n{5}\n{6}\n{7}\n{8}\n{9}\n{10}",
-                "/help – показать помощь",
-                "/words – показать запрещенные строки-шаблоны",
-                "/templates – альтернатива /words",
-                "/add – добавить запрещенную строку-шаблон",
-                "/remove (/rm) – убрать запрещенную строку-шаблон",
-                "/delete (/del) – альтернатива /remove",
-                "/users (/promoted) – список участников с привилегиями",
-                "/mute [d.]HH:mm[:ss] - замутить участника на определенный срок",
-                "/unmute - розмутить участника",
-                "/promote - наддать привилегии особого участника чата",
-                "/unpromote - забрать привилегии особого участника чата");
+            const string response = "Список команд:\n" +
+                                    "/help – показать помощь\n" +
+                                    "/words – показать запрещенные строки-шаблоны\n" +
+                                    "/templates – альтернатива /words\n" +
+                                    "/add – добавить запрещенную строку-шаблон\n" +
+                                    "/remove (/rm) – убрать запрещенную строку-шаблон\n" +
+                                    "/delete (/del) – альтернатива /remove\n" +
+                                    "/users (/promoted) – список участников с привилегиями\n" +
+                                    "/mute [d.]HH:mm[:ss] - замутить участника на определенный срок\n" +
+                                    "/unmute - розмутить участника\n" +
+                                    "/promote - наддать привилегии особого участника чата\n" +
+                                    "/unpromote - забрать привилегии особого участника чата";
             await botClient.SendTextMessageAsync(
                 message.Chat.Id,
                 response,
