@@ -48,6 +48,7 @@ namespace DevSilenceKeeperBot.Commands
             }
 
             await botClient.DeleteMessageAsync(message.Chat.Id, message.ReplyToMessage.MessageId);
+            await botClient.DeleteMessageAsync(message.Chat.Id, message.MessageId);
         }
         
         private static async Task SendTextResponse(string text, Message replyToMessage, TelegramBotClient botClient)
