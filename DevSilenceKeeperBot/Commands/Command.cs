@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -10,7 +9,7 @@ namespace DevSilenceKeeperBot.Commands
     {
         public abstract string[] Triggers { get; }
 
-        public abstract Task Execute(Message message, TelegramBotClient botClient);
+        public abstract Task Execute(Message message);
 
         public virtual bool Contains(Message message)
         {

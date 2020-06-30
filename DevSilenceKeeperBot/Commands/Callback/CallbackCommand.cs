@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace DevSilenceKeeperBot.Commands.Callback
@@ -11,7 +10,8 @@ namespace DevSilenceKeeperBot.Commands.Callback
         protected int InvokerId { get; set; }
         protected string[] Arguments { get; set; }
         public abstract string[] Triggers { get; }
-        public abstract Task Execute(CallbackQuery query, TelegramBotClient botClient);
+        public abstract Task Execute(CallbackQuery query);
+
         public virtual bool Contains(CallbackQuery query)
         {
             // InvokerId:CallbackQueryTrigger:Arg1:Arg2:...

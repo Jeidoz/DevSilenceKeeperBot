@@ -4,7 +4,6 @@ using DevSilenceKeeperBot.Exceptions;
 using DevSilenceKeeperBot.Extensions;
 using DevSilenceKeeperBot.Logging;
 using DevSilenceKeeperBot.Services;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -23,32 +22,32 @@ namespace DevSilenceKeeperBot.Commands
 
         public override string[] Triggers => new[] {"/unpromote"};
 
-        public override async Task Execute(Message message, TelegramBotClient botClient)
+        public override async Task Execute(Message message)
         {
-            if (!await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false))
+            if (!await message.From.IsAdmin(message.Chat.Id))
             {
-                await botClient.SendTextMessageAsync(
+                await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                     message.Chat.Id,
-                    text: "Надавать привилегии могут только модераторы!",
-                    replyToMessageId: message.MessageId).ConfigureAwait(false);
+                    "Надавать привилегии могут только модераторы!",
+                    replyToMessageId: message.MessageId);
                 return;
             }
 
             if (string.IsNullOrEmpty(message.ReplyToMessage.Text))
             {
-                await botClient.SendTextMessageAsync(
+                await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                     message.Chat.Id,
-                    text: "Для понижения привилегий, нужно делать Reply на сообщение участника чата.",
-                    replyToMessageId: message.MessageId).ConfigureAwait(false);
+                    "Для понижения привилегий, нужно делать Reply на сообщение участника чата.",
+                    replyToMessageId: message.MessageId);
                 return;
             }
 
             if (message.ReplyToMessage.From == message.From)
             {
-                await botClient.SendTextMessageAsync(
+                await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                     message.Chat.Id,
-                    text: "Понижать самого себя любимого как-то неправильно...",
-                    replyToMessageId: message.MessageId).ConfigureAwait(false);
+                    "Понижать самого себя любимого как-то неправильно...",
+                    replyToMessageId: message.MessageId);
                 return;
             }
 
@@ -72,11 +71,11 @@ namespace DevSilenceKeeperBot.Commands
                 _logger.Error($"[{nameof(ex)}]: {ex.Message}\n{ex.StackTrace}");
             }
 
-            await botClient.SendTextMessageAsync(
+            await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                 message.Chat.Id,
                 response,
                 replyToMessageId: message.MessageId,
-                parseMode: ParseMode.Markdown).ConfigureAwait(false);
+                parseMode: ParseMode.Markdown);
         }
     }
 }

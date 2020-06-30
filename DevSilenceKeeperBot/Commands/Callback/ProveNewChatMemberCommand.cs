@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -9,14 +8,14 @@ namespace DevSilenceKeeperBot.Commands.Callback
     public class ProveNewChatMemberCommand : CallbackCommand
     {
         public override string[] Triggers => new[] {"verified"};
-        
-        public override async Task Execute(CallbackQuery query, TelegramBotClient botClient)
+
+        public override async Task Execute(CallbackQuery query)
         {
             if (query.From.Id != InvokerId)
             {
                 return;
             }
-            
+
             var unmutePermissions = new ChatPermissions
             {
                 CanSendMessages = true,
@@ -27,20 +26,20 @@ namespace DevSilenceKeeperBot.Commands.Callback
                 CanInviteUsers = true
             };
 
-            await botClient.RestrictChatMemberAsync(
+            await DevSilenceKeeper.BotClient.RestrictChatMemberAsync(
                 query.Message.Chat.Id,
                 query.From.Id,
                 unmutePermissions,
-                DateTime.Now).ConfigureAwait(false);
-            
-            
-            botClient.SendTextMessageAsync(
-                query.Message.Chat.Id,
-                $"[{query.From}](tg://user?id={query.From.Id}) теперь ты полноценный участник чата!",
-                ParseMode.Markdown)
+                DateTime.Now);
+
+
+            DevSilenceKeeper.BotClient.SendTextMessageAsync(
+                    query.Message.Chat.Id,
+                    $"[{query.From}](tg://user?id={query.From.Id}) теперь ты полноценный участник чата!",
+                    ParseMode.Markdown)
                 .Wait();
 
-            await botClient.DeleteMessageAsync(
+            await DevSilenceKeeper.BotClient.DeleteMessageAsync(
                 query.Message.Chat.Id,
                 query.Message.MessageId);
         }

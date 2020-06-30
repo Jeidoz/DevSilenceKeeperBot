@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using DevSilenceKeeperBot.Extensions;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -25,15 +24,15 @@ namespace DevSilenceKeeperBot.Commands
                    && words.Length <= MaxWordsInHelloMessage;
         }
 
-        public override async Task Execute(Message message, TelegramBotClient botClient)
+        public override async Task Execute(Message message)
         {
-            await botClient.SendPhotoAsync(
+            await DevSilenceKeeper.BotClient.SendPhotoAsync(
                 message.Chat.Id,
-                photo: "https://neprivet.ru/img/bad-good.png",
-                caption: "[Не привет](https://neprivet.ru)",
+                "https://neprivet.ru/img/bad-good.png",
+                "[Не привет](https://neprivet.ru)",
                 ParseMode.MarkdownV2,
                 replyToMessageId: message.MessageId,
-                disableNotification: true).ConfigureAwait(false);
+                disableNotification: true);
         }
     }
 }

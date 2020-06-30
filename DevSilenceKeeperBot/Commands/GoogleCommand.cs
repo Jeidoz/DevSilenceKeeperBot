@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using DevSilenceKeeperBot.Extensions;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -25,17 +24,17 @@ namespace DevSilenceKeeperBot.Commands
                    && formattedText.Split().Length >= MinWordsGoogleMessageLength;
         }
 
-        public override async Task Execute(Message message, TelegramBotClient botClient)
+        public override async Task Execute(Message message)
         {
             string imageCaption = $"[{message.Text}](https://www.google.com/search?q={message.Text})\n\n" +
                                   "[Пожалуйста, научитесь гуглить](http://sadykhzadeh.github.io/learn-to-google)";
-            await botClient.SendPhotoAsync(
+            await DevSilenceKeeper.BotClient.SendPhotoAsync(
                 message.Chat.Id,
-                photo: "https://sadykhzadeh.github.io/learn-to-google/img/bad-good.jpg",
+                "https://sadykhzadeh.github.io/learn-to-google/img/bad-good.jpg",
                 imageCaption,
                 ParseMode.MarkdownV2,
                 replyToMessageId: message.MessageId,
-                disableNotification: true).ConfigureAwait(false);
+                disableNotification: true);
         }
     }
 }

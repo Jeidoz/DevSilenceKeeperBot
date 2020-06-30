@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using DevSilenceKeeperBot.Extensions;
 using DevSilenceKeeperBot.Services;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace DevSilenceKeeperBot.Commands
@@ -20,37 +19,35 @@ namespace DevSilenceKeeperBot.Commands
 
         public override string[] Triggers => new[] {"/mute"};
 
-        public override async Task Execute(Message message, TelegramBotClient botClient)
+        public override async Task Execute(Message message)
         {
             if (message.ReplyToMessage is null)
             {
-                await SendTextResponse("Вызывать мут без цели это признак дурачины ಠ_ಠ...", message, botClient);
+                await SendTextResponse("Вызывать мут без цели это признак дурачины ಠ_ಠ...", message);
                 return;
             }
-            
-            if (IsItAnAttemptToMuteBotByYourself(message, botClient))
+
+            if (IsItAnAttemptToMuteBotByYourself(message))
             {
-                await SendTextResponse("Я не дурак, что бы мутить самого себя ಠ_ಠ...", message, botClient);
+                await SendTextResponse("Я не дурак, что бы мутить самого себя ಠ_ಠ...", message);
                 return;
             }
 
             if (IsItAnAttemptToMuteChatMemberByYourself(message))
             {
-                await SendTextResponse("Мутить самого-себя как-то неправильно...", message, botClient);
+                await SendTextResponse("Мутить самого-себя как-то неправильно...", message);
                 return;
             }
 
-            if(await IsChatMemberHaveRightsToMute(message, botClient) == false)
+            if (await IsChatMemberHaveRightsToMute(message) == false)
             {
-                await SendTextResponse("Мутить могут только модераторы и участники чата с привилегиями!", message,
-                    botClient);
+                await SendTextResponse("Мутить могут только модераторы и участники чата с привилегиями!", message);
                 return;
             }
-            
-            if (await message.ReplyToMessage.From.IsAdmin(message.Chat.Id, botClient))
+
+            if (await message.ReplyToMessage.From.IsAdmin(message.Chat.Id))
             {
-                await SendTextResponse("Ну тут наши полномочия всё. Админа замутить не имею права...", message,
-                    botClient);
+                await SendTextResponse("Ну тут наши полномочия всё. Админа замутить не имею права...", message);
                 return;
             }
 
@@ -61,30 +58,30 @@ namespace DevSilenceKeeperBot.Commands
             }
             catch (ArgumentException ex)
             {
-                await SendTextResponse(ex.Message, message, botClient);
+                await SendTextResponse(ex.Message, message);
                 return;
             }
 
             var muteUntilDate = DateTime.Now + muteDuration;
-            Task muteChatMember = botClient.RestrictChatMemberAsync(
+            var muteChatMember = DevSilenceKeeper.BotClient.RestrictChatMemberAsync(
                 message.Chat.Id,
                 message.ReplyToMessage.From.Id,
                 new ChatPermissions {CanSendMessages = false},
                 muteUntilDate);
-            Task reportMute = botClient.SendTextMessageAsync(
+            Task reportMute = DevSilenceKeeper.BotClient.SendTextMessageAsync(
                 message.Chat.Id,
                 $"{message.ReplyToMessage.From} замучен до {muteUntilDate:dd.MM.yyyy HH:mm:ss} (UTC+02:00)",
                 replyToMessageId: message.MessageId);
 
             Task.WaitAll(muteChatMember, reportMute);
-            await botClient.DeleteMessageAsync(
+            await DevSilenceKeeper.BotClient.DeleteMessageAsync(
                 message.Chat.Id,
-                message.ReplyToMessage.MessageId).ConfigureAwait(false);
+                message.ReplyToMessage.MessageId);
         }
 
-        private bool IsItAnAttemptToMuteBotByYourself(Message message, TelegramBotClient botClient)
+        private bool IsItAnAttemptToMuteBotByYourself(Message message)
         {
-            return message.ReplyToMessage.From.Id == botClient.BotId;
+            return message.ReplyToMessage.From.Id == DevSilenceKeeper.BotClient.BotId;
         }
 
         private bool IsItAnAttemptToMuteChatMemberByYourself(Message message)
@@ -92,21 +89,21 @@ namespace DevSilenceKeeperBot.Commands
             return message.ReplyToMessage.From.Id == message.From.Id;
         }
 
-        private async Task<bool> IsChatMemberHaveRightsToMute(Message message, TelegramBotClient botClient)
+        private async Task<bool> IsChatMemberHaveRightsToMute(Message message)
         {
             var promotedMembers = _chatService.GetPromotedMembers(message.Chat.Id);
-            bool isAdmin = await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false);
+            bool isAdmin = await message.From.IsAdmin(message.Chat.Id);
             bool isPromotedChatMember = promotedMembers?.Any(member => member.UserId == message.From.Id) == true;
             return isAdmin || isPromotedChatMember;
         }
 
-        private static async Task SendTextResponse(string text, Message replyToMessage, TelegramBotClient botClient)
+        private static async Task SendTextResponse(string text, Message replyToMessage)
         {
-            await botClient.SendTextMessageAsync(
-                replyToMessage.Chat.Id,
-                text,
-                replyToMessageId: replyToMessage.MessageId)
-                .ConfigureAwait(false);
+            await DevSilenceKeeper.BotClient.SendTextMessageAsync(
+                    replyToMessage.Chat.Id,
+                    text,
+                    replyToMessageId: replyToMessage.MessageId)
+                ;
         }
 
         private TimeSpan GetMuteDuration(string commandArgs)
@@ -124,7 +121,7 @@ namespace DevSilenceKeeperBot.Commands
             if (!isParsed)
             {
                 throw new ArgumentException(
-                    message: "Дай TimeSpan в формате [d.]HH:mm[:ss[.ff]]! Я же робот, а не человек (╯°□°）╯︵ ┻━┻");
+                    "Дай TimeSpan в формате [d.]HH:mm[:ss[.ff]]! Я же робот, а не человек (╯°□°）╯︵ ┻━┻");
             }
 
             if (muteDuration > TimeSpan.Zero)
@@ -132,7 +129,7 @@ namespace DevSilenceKeeperBot.Commands
                 return muteDuration;
             }
 
-            throw new ArgumentException(message: "Вот давай без мута в прошлое.");
+            throw new ArgumentException("Вот давай без мута в прошлое.");
         }
     }
 }

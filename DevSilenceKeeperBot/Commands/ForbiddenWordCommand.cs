@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using DevSilenceKeeperBot.Extensions;
 using DevSilenceKeeperBot.Services;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace DevSilenceKeeperBot.Commands
@@ -59,12 +58,12 @@ namespace DevSilenceKeeperBot.Commands
             return chatForbiddenWords.Any(word => message.Text.Contains(word));
         }
 
-        public override async Task Execute(Message message, TelegramBotClient botClient)
+        public override async Task Execute(Message message)
         {
             var tasks = new List<Task>();
-            if (await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false))
+            if (await message.From.IsAdmin(message.Chat.Id))
             {
-                Task replyToAdminTask = botClient.SendTextMessageAsync(
+                Task replyToAdminTask = DevSilenceKeeper.BotClient.SendTextMessageAsync(
                     message.Chat.Id,
                     $"Модератор {message.From} нарушает правила чата!",
                     replyToMessageId: message.MessageId);
@@ -73,12 +72,12 @@ namespace DevSilenceKeeperBot.Commands
             else
             {
                 var until = DateTime.Now.AddSeconds(31);
-                var kickChatMemberTask = botClient.KickChatMemberAsync(
+                var kickChatMemberTask = DevSilenceKeeper.BotClient.KickChatMemberAsync(
                     message.Chat.Id,
                     message.From.Id,
                     until);
 
-                Task reportAboutKickTask = botClient.SendTextMessageAsync(
+                Task reportAboutKickTask = DevSilenceKeeper.BotClient.SendTextMessageAsync(
                     message.Chat.Id,
                     $"Пользователь {message.From} нарушил правила чата!",
                     replyToMessageId: message.MessageId);
@@ -87,7 +86,7 @@ namespace DevSilenceKeeperBot.Commands
             }
 
             Task.WaitAll(tasks.ToArray());
-            await botClient.DeleteMessageAsync(message.Chat.Id, message.MessageId).ConfigureAwait(false);
+            await DevSilenceKeeper.BotClient.DeleteMessageAsync(message.Chat.Id, message.MessageId);
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace DevSilenceKeeperBot.Commands
@@ -8,7 +7,7 @@ namespace DevSilenceKeeperBot.Commands
     {
         public override string[] Triggers => new[] {"/help"};
 
-        public override async Task Execute(Message message, TelegramBotClient botClient)
+        public override async Task Execute(Message message)
         {
             const string response = "Список команд:\n" +
                                     "/help – показать помощь\n" +
@@ -22,10 +21,10 @@ namespace DevSilenceKeeperBot.Commands
                                     "/unmute - розмутить участника\n" +
                                     "/promote - наддать привилегии особого участника чата\n" +
                                     "/unpromote - забрать привилегии особого участника чата";
-            await botClient.SendTextMessageAsync(
+            await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                 message.Chat.Id,
                 response,
-                replyToMessageId: message.MessageId).ConfigureAwait(false);
+                replyToMessageId: message.MessageId);
         }
     }
 }

@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 using DevSilenceKeeperBot.Services;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -19,7 +18,7 @@ namespace DevSilenceKeeperBot.Commands
 
         public override string[] Triggers => new[] {"/promoted", "/users"};
 
-        public override async Task Execute(Message message, TelegramBotClient botClient)
+        public override async Task Execute(Message message)
         {
             var promotedMemberIds = _chatService.GetPromotedMembers(message.Chat.Id);
             var promotedMembers = new List<string>();
@@ -39,11 +38,11 @@ namespace DevSilenceKeeperBot.Commands
                 response = "В данном чате отсутствуют участники с привилегиями.";
             }
 
-            await botClient.SendTextMessageAsync(
+            await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                 message.Chat.Id,
                 response,
                 replyToMessageId: message.MessageId,
-                parseMode: ParseMode.Markdown).ConfigureAwait(false);
+                parseMode: ParseMode.Markdown);
         }
     }
 }

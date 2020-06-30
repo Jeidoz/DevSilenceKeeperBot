@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using DevSilenceKeeperBot.Extensions;
 using DevSilenceKeeperBot.Services;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace DevSilenceKeeperBot.Commands
@@ -19,14 +18,14 @@ namespace DevSilenceKeeperBot.Commands
 
         public override string[] Triggers => new[] {"/add"};
 
-        public override async Task Execute(Message message, TelegramBotClient botClient)
+        public override async Task Execute(Message message)
         {
-            if (!await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false))
+            if (!await message.From.IsAdmin(message.Chat.Id))
             {
-                await botClient.SendTextMessageAsync(
+                await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                     message.Chat.Id,
-                    text: "Добавлять строки-шаблоны могут только модераторы!",
-                    replyToMessageId: message.MessageId).ConfigureAwait(false);
+                    "Добавлять строки-шаблоны могут только модераторы!",
+                    replyToMessageId: message.MessageId);
                 return;
             }
 
@@ -37,28 +36,28 @@ namespace DevSilenceKeeperBot.Commands
 
             if (string.IsNullOrWhiteSpace(args) || args.Length < 4)
             {
-                await botClient.SendTextMessageAsync(
+                await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                     message.Chat.Id,
-                    text: "Строка-шаблон должна состоять минимум из 4ех символов!",
-                    replyToMessageId: message.MessageId).ConfigureAwait(false);
+                    "Строка-шаблон должна состоять минимум из 4ех символов!",
+                    replyToMessageId: message.MessageId);
                 return;
             }
 
             var chatForbiddenWords = _chatService.GetChatForbiddenWords(message.Chat.Id);
             if (chatForbiddenWords?.Contains(args) == true)
             {
-                await botClient.SendTextMessageAsync(
+                await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                     message.Chat.Id,
-                    text: "Данная строка-шаблон уже присутствует в банлисте.",
-                    replyToMessageId: message.MessageId).ConfigureAwait(false);
+                    "Данная строка-шаблон уже присутствует в банлисте.",
+                    replyToMessageId: message.MessageId);
                 return;
             }
 
             _chatService.AddChatForbiddenWord(message.Chat.Id, args);
-            await botClient.SendTextMessageAsync(
+            await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                 message.Chat.Id,
                 $"Строка-шаблон \"{args}\" успешно добавлена",
-                replyToMessageId: message.MessageId).ConfigureAwait(false);
+                replyToMessageId: message.MessageId);
         }
     }
 }

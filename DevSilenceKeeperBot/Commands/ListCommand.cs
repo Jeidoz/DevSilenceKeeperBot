@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using DevSilenceKeeperBot.Services;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace DevSilenceKeeperBot.Commands
@@ -17,7 +16,7 @@ namespace DevSilenceKeeperBot.Commands
 
         public override string[] Triggers => new[] {"/words", "/templates", "/list"};
 
-        public override async Task Execute(Message message, TelegramBotClient botClient)
+        public override async Task Execute(Message message)
         {
             var chatForbiddenWords = _chatService
                 .GetChatForbiddenWords(message.Chat.Id)
@@ -33,10 +32,10 @@ namespace DevSilenceKeeperBot.Commands
                 response = "Банлист пуст.";
             }
 
-            await botClient.SendTextMessageAsync(
+            await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                 message.Chat.Id,
                 response,
-                replyToMessageId: message.MessageId).ConfigureAwait(false);
+                replyToMessageId: message.MessageId);
         }
     }
 }

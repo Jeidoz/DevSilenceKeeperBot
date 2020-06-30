@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using DevSilenceKeeperBot.Extensions;
 using DevSilenceKeeperBot.Services;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace DevSilenceKeeperBot.Commands
@@ -19,27 +18,27 @@ namespace DevSilenceKeeperBot.Commands
 
         public override string[] Triggers => new[] {"/unmute"};
 
-        public override async Task Execute(Message message, TelegramBotClient botClient)
+        public override async Task Execute(Message message)
         {
             var promotedMembers = _chatService.GetPromotedMembers(message.Chat.Id);
-            bool isAdmin = await message.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false);
+            bool isAdmin = await message.From.IsAdmin(message.Chat.Id);
             bool isPromotedChatMember = promotedMembers?.Any(member => member.UserId == message.From.Id) == true;
             if (!(isAdmin || isPromotedChatMember))
             {
-                await botClient.SendTextMessageAsync(
+                await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                     message.Chat.Id,
-                    text: "Розмутить могут только модераторы и участники чата с привилегиями!",
-                    replyToMessageId: message.MessageId).ConfigureAwait(false);
+                    "Розмутить могут только модераторы и участники чата с привилегиями!",
+                    replyToMessageId: message.MessageId);
                 return;
             }
 
-            isAdmin = await message.ReplyToMessage.From.IsAdmin(message.Chat.Id, botClient).ConfigureAwait(false);
+            isAdmin = await message.ReplyToMessage.From.IsAdmin(message.Chat.Id);
             if (isAdmin)
             {
-                await botClient.SendTextMessageAsync(
+                await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                     message.Chat.Id,
-                    text: "Ничосе!. Админа розмутить пытаются...",
-                    replyToMessageId: message.MessageId).ConfigureAwait(false);
+                    "Ничосе!. Админа розмутить пытаются...",
+                    replyToMessageId: message.MessageId);
                 return;
             }
 
@@ -53,15 +52,15 @@ namespace DevSilenceKeeperBot.Commands
                 CanInviteUsers = true
             };
 
-            await botClient.RestrictChatMemberAsync(
+            await DevSilenceKeeper.BotClient.RestrictChatMemberAsync(
                 message.Chat.Id,
                 message.ReplyToMessage.From.Id,
                 unmutePermissions,
-                DateTime.Now).ConfigureAwait(false);
-            await botClient.SendTextMessageAsync(
+                DateTime.Now);
+            await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                 message.Chat.Id,
                 $"{message.ReplyToMessage.From} розмучен",
-                replyToMessageId: message.MessageId).ConfigureAwait(false);
+                replyToMessageId: message.MessageId);
         }
     }
 }
