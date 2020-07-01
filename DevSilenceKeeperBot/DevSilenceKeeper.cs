@@ -16,13 +16,14 @@ namespace DevSilenceKeeperBot
     // ReSharper disable once UnusedType.Global
     public sealed class DevSilenceKeeper : IDevSilenceKeeper
     {
-        private readonly TelegramBotClient _botClient;
-        private readonly IChatService _chatService;
+        public static ITelegramBotClient BotClient;
 
+        private readonly AppSettings _settings;
+        private readonly IChatService _chatService;
+        private readonly ILogger _logger;
+        
         private readonly List<Command> _commands;
         private readonly List<CallbackCommand> _callbackCommands;
-        private readonly ILogger _logger;
-        private readonly AppSettings _settings;
         private readonly CancellationTokenSource _tokenSource = new CancellationTokenSource();
 
         public DevSilenceKeeper(
@@ -31,9 +32,9 @@ namespace DevSilenceKeeperBot
             ILogger logger)
         {
             _settings = appSettingsReader.Read();
-            _botClient = new TelegramBotClient(_settings.BotToken);
-            _botClient.OnMessage += OnMessage;
-            _botClient.OnCallbackQuery += OnCallbackQuery;
+            InitializeBotClientInstance(_settings.BotToken);
+            BotClient.OnMessage += OnMessage;
+            BotClient.OnCallbackQuery += OnCallbackQuery;
 
             _chatService = chatService;
             _logger = logger;
@@ -41,33 +42,50 @@ namespace DevSilenceKeeperBot
             InitializeListOfBotCommands(out _commands);
             InitializeListOfBotCallbackCommands(out _callbackCommands);
         }
-
-        public void Run()
+        private static void InitializeBotClientInstance(string botToken)
         {
-            try
+            BotClient = new TelegramBotClient(botToken);
+        }
+        private async void OnMessage(object sender, MessageEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e.Message.Text) && e.Message.NewChatMembers == null)
             {
-                StartPolling();
-                while (!_tokenSource.IsCancellationRequested)
+                return;
+            }
+
+            foreach (var command in _commands.Where(command => command.Contains(e.Message)))
+            {
+                await command.Execute(e.Message);
+                if (command is ForbiddenWordCommand)
                 {
-                    Thread.Sleep(TimeSpan.FromMinutes(1));
+                    _logger.Info($"{e.Message.From} нарушил правила чата: \"{e.Message.Text}\"");
                 }
-                StopPolling();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(value: "Во время роботы случилась ошибка:");
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(ex.Source);
-                Console.WriteLine(ex.StackTrace);
-                Console.WriteLine(ex.InnerException);
+                else
+                {
+                    string commandIdentifier = command.Triggers != null
+                        ? command.Triggers.First()
+                        : command.GetType().Name;
+                    _logger.Info($"{e.Message.From} запросил команду {commandIdentifier}");
+                }
+
+                return;
             }
         }
-
-        public void Cancel()
+        private async void OnCallbackQuery(object sender, CallbackQueryEventArgs e)
         {
-            _tokenSource.Cancel();
-        }
+            if (string.IsNullOrEmpty(e.CallbackQuery.Data))
+            {
+                return;
+            }
 
+            foreach (var command in _callbackCommands.Where(command => command.Contains(e.CallbackQuery)))
+            {
+                await command.Execute(e.CallbackQuery);
+                _logger.Info(
+                    $"{e.CallbackQuery.From} запросил callback команду {command.Triggers[0] ?? command.GetType().Name}");
+                return;
+            }
+        }
         private void InitializeListOfBotCommands(out List<Command> commands)
         {
             commands = new List<Command>
@@ -85,10 +103,11 @@ namespace DevSilenceKeeperBot
                 new MuteCommand(_chatService),
                 new UnmuteCommand(_chatService),
                 new VerifyNewChatMemberCommand(),
-                new DeleteMessageCommand(_chatService)
+                new DeleteMessageCommand(_chatService),
+                new BanCommand(_chatService),
+                new UnbanCommand(_chatService)
             };
         }
-
         private void InitializeListOfBotCallbackCommands(out List<CallbackCommand> commands)
         {
             commands = new List<CallbackCommand>
@@ -96,58 +115,42 @@ namespace DevSilenceKeeperBot
                 new ProveNewChatMemberCommand()
             };
         }
-
-        private async void OnMessage(object sender, MessageEventArgs e)
-        {
-            if (string.IsNullOrEmpty(e.Message.Text) && e.Message.NewChatMembers == null)
-            {
-                return;
-            }
-
-            foreach (var command in _commands.Where(command => command.Contains(e.Message)))
-            {
-                await command.Execute(e.Message, _botClient).ConfigureAwait(false);
-                if (command is ForbiddenWordCommand)
-                {
-                    _logger.Info($"{e.Message.From} нарушил правила чата: \"{e.Message.Text}\"");
-                }
-                else
-                {
-                    string commandIdentifier = command.Triggers != null 
-                        ? command.Triggers.First() 
-                        : command.GetType().Name;
-                    _logger.Info($"{e.Message.From} запросил команду {commandIdentifier}");   
-                }
-
-                return;
-            }
-        }
         
-        private async void OnCallbackQuery(object sender, CallbackQueryEventArgs e)
+        public void Run()
         {
-            if (string.IsNullOrEmpty(e.CallbackQuery.Data))
+            try
             {
-                return;
+                StartPolling();
+                while (!_tokenSource.IsCancellationRequested)
+                {
+                    Thread.Sleep(TimeSpan.FromMinutes(1));
+                }
+
+                StopPolling();
             }
-            
-            foreach (var command in _callbackCommands.Where(command => command.Contains(e.CallbackQuery)))
+            catch (Exception ex)
             {
-                await command.Execute(e.CallbackQuery, _botClient).ConfigureAwait(false);
-                _logger.Info($"{e.CallbackQuery.From} запросил callback команду {command.Triggers[0] ?? command.GetType().Name}");
-                return;
+                Console.WriteLine("Во время роботы случилась ошибка:");
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.Source);
+                Console.WriteLine(ex.StackTrace);
+                Console.WriteLine(ex.InnerException);
             }
         }
-
         private void StartPolling()
         {
-            _botClient.StartReceiving();
-            _logger.Info(text: "Бот начал обрабатывать сообщения...");
+            BotClient.StartReceiving();
+            _logger.Info("Бот начал обрабатывать сообщения...");
         }
-
         private void StopPolling()
         {
-            _botClient.StopReceiving();
-            _logger.Info(text: "Бот прекратил работу...");
+            BotClient.StopReceiving();
+            _logger.Info("Бот прекратил работу...");
+        }
+
+        public void Cancel()
+        {
+            _tokenSource.Cancel();
         }
     }
 }

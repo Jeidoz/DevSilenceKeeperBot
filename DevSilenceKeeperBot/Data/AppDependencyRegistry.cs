@@ -11,7 +11,7 @@ namespace DevSilenceKeeperBot.Data
             Scan(scan =>
             {
                 scan.TheCallingAssembly();
-                scan.Exclude(type => type.Namespace != null && type.Namespace.Contains(value: "LiteDb"));
+                scan.Exclude(type => type.Namespace != null && type.Namespace.Contains("LiteDb"));
                 scan.WithDefaultConventions();
             });
 
@@ -19,7 +19,7 @@ namespace DevSilenceKeeperBot.Data
             For<IDbContext>()
                 .Singleton()
                 .Use<DbContext>()
-                .Ctor<string>(constructorArg: "dbFilename")
+                .Ctor<string>("dbFilename")
                 .Is($"{Process.GetCurrentProcess().ProcessName}.db");
 
             For<ILogger>().Use<ConsoleLogger>();

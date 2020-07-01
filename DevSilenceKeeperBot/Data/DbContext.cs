@@ -8,12 +8,12 @@ namespace DevSilenceKeeperBot.Data
         public DbContext(string dbFilename)
         {
             ILiteDatabase db = new LiteDatabase(dbFilename);
-            Chats = db.GetCollection<Chat>(name: "chats");
+            Chats = db.GetCollection<Chat>("chats");
         }
 
         public DbContext(ILiteDatabase database)
         {
-            Chats = database.GetCollection<Chat>(name: "chats");
+            Chats = database.GetCollection<Chat>("chats");
         }
 
         public ILiteCollection<Chat> Chats { get; }

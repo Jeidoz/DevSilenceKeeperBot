@@ -10,7 +10,8 @@ namespace DevSilenceKeeperBot.Extensions
             {
                 return string.Empty;
             }
-            var pattern = new Regex(pattern: "[-:!@#$%^&*()}{|\":?><\\[\\]\\;'/.,~]");
+
+            var pattern = new Regex("[-:!@#$%^&*()}{|\":?><\\[\\]\\;'/.,~]");
             return pattern.Replace(text, string.Empty).ToLower();
         }
     }

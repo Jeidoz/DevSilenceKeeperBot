@@ -29,7 +29,7 @@ namespace DevSilenceKeeperBot.Services
             {
                 if (chat.ForbiddenWords.Contains(word))
                 {
-                    throw new AddingDuplicateRecord(message: "Данная строка-шаблон уже существует в банлисте",
+                    throw new AddingDuplicateRecord("Данная строка-шаблон уже существует в банлисте",
                         nameof(word));
                 }
 
@@ -59,7 +59,7 @@ namespace DevSilenceKeeperBot.Services
 
             if (!chat.ForbiddenWords.Contains(word))
             {
-                throw new RemovingNotExistingRecordException(message: "Данная строка-шаблон отсутствует в банлисте",
+                throw new RemovingNotExistingRecordException("Данная строка-шаблон отсутствует в банлисте",
                     nameof(word));
             }
 
@@ -81,7 +81,7 @@ namespace DevSilenceKeeperBot.Services
 
                 if (chat.PromotedMembers.Any(member => member.UserId == chatMember.Id))
                 {
-                    throw new AddingDuplicateRecord(message: "Данный пользователь уже имеет дополнительные привилегии.",
+                    throw new AddingDuplicateRecord("Данный пользователь уже имеет дополнительные привилегии.",
                         nameof(chatMember.Id));
                 }
 
@@ -124,7 +124,7 @@ namespace DevSilenceKeeperBot.Services
             if (chat.PromotedMembers.All(member => member.UserId != userId))
             {
                 throw new RemovingNotExistingRecordException(
-                    message: "Данный пользователь не имел дополнительных привилегий.", nameof(userId));
+                    "Данный пользователь не имел дополнительных привилегий.", nameof(userId));
             }
 
             var userForDelete = chat.PromotedMembers.Find(member => member.UserId == userId);

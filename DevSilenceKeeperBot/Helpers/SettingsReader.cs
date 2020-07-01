@@ -14,12 +14,12 @@ namespace DevSilenceKeeperBot.Helpers
             string json;
             try
             {
-                json = File.ReadAllText(path: "appSettings.json", Encoding.UTF8);
+                json = File.ReadAllText("appSettings.json", Encoding.UTF8);
             }
             catch (FileNotFoundException)
             {
                 throw new MissingAppSettingsFileException(
-                    message: "appSettings.json file is missing in the app folder");
+                    "appSettings.json file is missing in the app folder");
             }
 
             return JsonConvert.DeserializeObject<AppSettings>(json);
