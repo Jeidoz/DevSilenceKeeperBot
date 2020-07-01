@@ -20,7 +20,9 @@ namespace DevSilenceKeeperBot.Commands
                                     "/mute [d.]HH:mm[:ss] - замутить участника на определенный срок\n" +
                                     "/unmute - розмутить участника\n" +
                                     "/promote - наддать привилегии особого участника чата\n" +
-                                    "/unpromote - забрать привилегии особого участника чата";
+                                    "/unpromote - забрать привилегии особого участника чата\n" +
+                                    "/ban – забанить пользователя\n" +
+                                    "/unban – розбанить пользователя\n";
             await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                 message.Chat.Id,
                 response,
