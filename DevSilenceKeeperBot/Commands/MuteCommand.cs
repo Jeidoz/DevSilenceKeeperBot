@@ -63,20 +63,15 @@ namespace DevSilenceKeeperBot.Commands
             }
 
             var muteUntilDate = DateTime.Now + muteDuration;
-            var muteChatMember = DevSilenceKeeper.BotClient.RestrictChatMemberAsync(
+            await DevSilenceKeeper.BotClient.RestrictChatMemberAsync(
                 message.Chat.Id,
                 message.ReplyToMessage.From.Id,
                 new ChatPermissions {CanSendMessages = false},
                 muteUntilDate);
-            Task reportMute = DevSilenceKeeper.BotClient.SendTextMessageAsync(
+            await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                 message.Chat.Id,
                 $"{message.ReplyToMessage.From} замучен до {muteUntilDate:dd.MM.yyyy HH:mm:ss} (UTC+02:00)",
                 replyToMessageId: message.MessageId);
-
-            Task.WaitAll(muteChatMember, reportMute);
-            await DevSilenceKeeper.BotClient.DeleteMessageAsync(
-                message.Chat.Id,
-                message.ReplyToMessage.MessageId);
         }
 
         private bool IsItAnAttemptToMuteBotByYourself(Message message)
