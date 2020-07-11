@@ -43,7 +43,7 @@ namespace DevSilenceKeeperBot.Commands
                 return;
             }
 
-            var chatForbiddenWords = _chatService.GetChatForbiddenWords(message.Chat.Id);
+            var chatForbiddenWords = await _chatService.GetForbiddenWordsAsync(message.Chat.Id);
             if (chatForbiddenWords?.Contains(args) == false)
             {
                 await DevSilenceKeeper.BotClient.SendTextMessageAsync(
@@ -53,7 +53,7 @@ namespace DevSilenceKeeperBot.Commands
                 return;
             }
 
-            _chatService.RemoveChatForbiddenWord(message.Chat.Id, args);
+            await _chatService.RemoveForbiddenWordAsync(message.Chat.Id, args);
             await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                 message.Chat.Id,
                 $"Строка-шаблон \"{args}\" успешно убрана",

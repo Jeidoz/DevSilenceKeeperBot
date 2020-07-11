@@ -1,51 +1,44 @@
-﻿using System;
+﻿using DevSilenceKeeperBot.Commands;
+using DevSilenceKeeperBot.Commands.Callback;
+using DevSilenceKeeperBot.Services;
+using Microsoft.Extensions.Hosting;
+using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using DevSilenceKeeperBot.Commands;
-using DevSilenceKeeperBot.Commands.Callback;
-using DevSilenceKeeperBot.Helpers;
-using DevSilenceKeeperBot.Logging;
-using DevSilenceKeeperBot.Services;
-using DevSilenceKeeperBot.Types.Settings;
+using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 
 namespace DevSilenceKeeperBot
 {
     // ReSharper disable once UnusedType.Global
-    public sealed class DevSilenceKeeper : IDevSilenceKeeper
+    public sealed class DevSilenceKeeper : IHostedService
     {
         public static ITelegramBotClient BotClient;
 
-        private readonly AppSettings _settings;
         private readonly IChatService _chatService;
-        private readonly ILogger _logger;
-        
         private readonly List<Command> _commands;
         private readonly List<CallbackCommand> _callbackCommands;
-        private readonly CancellationTokenSource _tokenSource = new CancellationTokenSource();
 
-        public DevSilenceKeeper(
-            IAppSettingsReader appSettingsReader,
-            IChatService chatService,
-            ILogger logger)
+        public DevSilenceKeeper(IChatService chatService)
         {
-            _settings = appSettingsReader.Read();
-            InitializeBotClientInstance(_settings.BotToken);
+            InitializeBotClientInstance(Program.Configuration.GetSection("BotToken").Value);
             BotClient.OnMessage += OnMessage;
             BotClient.OnCallbackQuery += OnCallbackQuery;
 
             _chatService = chatService;
-            _logger = logger;
 
             InitializeListOfBotCommands(out _commands);
             InitializeListOfBotCallbackCommands(out _callbackCommands);
         }
+
         private static void InitializeBotClientInstance(string botToken)
         {
             BotClient = new TelegramBotClient(botToken);
         }
+
         private async void OnMessage(object sender, MessageEventArgs e)
         {
             if (string.IsNullOrEmpty(e.Message.Text) && e.Message.NewChatMembers == null)
@@ -58,19 +51,20 @@ namespace DevSilenceKeeperBot
                 await command.Execute(e.Message);
                 if (command is ForbiddenWordCommand)
                 {
-                    _logger.Info($"{e.Message.From} нарушил правила чата: \"{e.Message.Text}\"");
+                    Log.Logger.Information($"{e.Message.From} нарушил правила чата: \"{e.Message.Text}\"");
                 }
                 else
                 {
                     string commandIdentifier = command.Triggers != null
                         ? command.Triggers.First()
                         : command.GetType().Name;
-                    _logger.Info($"{e.Message.From} запросил команду {commandIdentifier}");
+                    Log.Logger.Information($"{e.Message.From} запросил команду {commandIdentifier}");
                 }
 
                 return;
             }
         }
+
         private async void OnCallbackQuery(object sender, CallbackQueryEventArgs e)
         {
             if (string.IsNullOrEmpty(e.CallbackQuery.Data))
@@ -81,25 +75,28 @@ namespace DevSilenceKeeperBot
             foreach (var command in _callbackCommands.Where(command => command.Contains(e.CallbackQuery)))
             {
                 await command.Execute(e.CallbackQuery);
-                _logger.Info(
+                Log.Logger.Information(
                     $"{e.CallbackQuery.From} запросил callback команду {command.Triggers[0] ?? command.GetType().Name}");
                 return;
             }
         }
+
         private void InitializeListOfBotCommands(out List<Command> commands)
         {
+            var helloWords = Program.Configuration["HelloWords"]?.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            var googleWords = Program.Configuration["GoogleWords"]?.Split(',', StringSplitOptions.RemoveEmptyEntries);
             commands = new List<Command>
             {
                 new HelpCommand(),
                 new ListCommand(_chatService),
                 new AddCommand(_chatService),
                 new RemoveCommand(_chatService),
-                new NotHelloCommand(_settings.HelloWords),
-                new GoogleCommand(_settings.GoogleWords),
+                new NotHelloCommand(helloWords),
+                new GoogleCommand(googleWords),
                 new ForbiddenWordCommand(_chatService),
                 new ListOfPromotedMembersCommand(_chatService),
-                new PromoteMemberCommand(_chatService, _logger),
-                new UnpromoteMemberCommand(_chatService, _logger),
+                new PromoteMemberCommand(_chatService),
+                new UnpromoteMemberCommand(_chatService),
                 new MuteCommand(_chatService),
                 new UnmuteCommand(_chatService),
                 new VerifyNewChatMemberCommand(),
@@ -108,6 +105,7 @@ namespace DevSilenceKeeperBot
                 new UnbanCommand(_chatService)
             };
         }
+
         private void InitializeListOfBotCallbackCommands(out List<CallbackCommand> commands)
         {
             commands = new List<CallbackCommand>
@@ -115,42 +113,48 @@ namespace DevSilenceKeeperBot
                 new ProveNewChatMemberCommand()
             };
         }
-        
-        public void Run()
-        {
-            try
-            {
-                StartPolling();
-                while (!_tokenSource.IsCancellationRequested)
-                {
-                    Thread.Sleep(TimeSpan.FromMinutes(1));
-                }
 
-                StopPolling();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Во время роботы случилась ошибка:");
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(ex.Source);
-                Console.WriteLine(ex.StackTrace);
-                Console.WriteLine(ex.InnerException);
-            }
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            return Task.Run(() =>
+             {
+                 try
+                 {
+                     StartPolling();
+                     while (!cancellationToken.IsCancellationRequested)
+                     {
+                         Thread.Sleep(TimeSpan.FromMinutes(1));
+                     }
+
+                     StopPolling();
+                 }
+                 catch (Exception ex)
+                 {
+                     Console.WriteLine("Во время роботы случилась ошибка:");
+                     Console.WriteLine(ex.Message);
+                     Console.WriteLine(ex.Source);
+                     Console.WriteLine(ex.StackTrace);
+                     Console.WriteLine(ex.InnerException);
+                 }
+             }, cancellationToken);
         }
+
         private void StartPolling()
         {
             BotClient.StartReceiving();
-            _logger.Info("Бот начал обрабатывать сообщения...");
+            Log.Logger.Information("Бот начал обрабатывать сообщения...");
         }
+
         private void StopPolling()
         {
             BotClient.StopReceiving();
-            _logger.Info("Бот прекратил работу...");
+            Log.Logger.Information("Бот прекратил работу...");
+            Log.CloseAndFlush();
         }
 
-        public void Cancel()
+        public Task StopAsync(CancellationToken cancellationToken)
         {
-            _tokenSource.Cancel();
+            return Task.Run(StopPolling, cancellationToken);
         }
     }
 }

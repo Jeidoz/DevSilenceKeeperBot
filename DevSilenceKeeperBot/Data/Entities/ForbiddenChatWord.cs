@@ -1,4 +1,4 @@
-﻿namespace DevSilenceKeeperBot.DAL.Entities
+﻿namespace DevSilenceKeeperBot.Data.Entities
 {
     public class ForbiddenChatWord : BaseEntity
     {

@@ -1,4 +1,4 @@
-﻿namespace DevSilenceKeeperBot.DAL.Entities.ManyToMany
+﻿namespace DevSilenceKeeperBot.Data.Entities.ManyToMany
 {
     public class ChatToPromotedMember
     {
