@@ -20,7 +20,7 @@ namespace DevSilenceKeeperBot.Commands
 
         public override async Task Execute(Message message)
         {
-            var promotedMemberIds = _chatService.GetPromotedMembers(message.Chat.Id);
+            var promotedMemberIds = await _chatService.GetPromotedMembersAsync(message.Chat.Id);
             var promotedMembers = new List<string>();
             if (promotedMemberIds != null)
             {

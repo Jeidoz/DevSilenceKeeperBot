@@ -28,7 +28,8 @@ namespace DevSilenceKeeperBot.Commands
             }
 
             var temp = _chatService
-                .GetChatForbiddenWords(message.Chat.Id);
+                .GetForbiddenWordsAsync(message.Chat.Id)
+                .Result;
             if (temp == null)
             {
                 return false;

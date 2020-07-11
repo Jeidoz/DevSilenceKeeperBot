@@ -38,7 +38,7 @@ namespace DevSilenceKeeperBot.Commands
                 return;
             }
 
-            var promotedMembers = _chatService.GetPromotedMembers(message.Chat.Id);
+            var promotedMembers = await _chatService.GetPromotedMembersAsync(message.Chat.Id);
             bool isAdmin = await message.From.IsAdmin(message.Chat.Id);
             bool isPromotedChatMember = promotedMembers?.Any(member => member.UserId == message.From.Id) == true;
             if (!(isAdmin || isPromotedChatMember))

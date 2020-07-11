@@ -18,11 +18,10 @@ namespace DevSilenceKeeperBot.Commands
 
         public override async Task Execute(Message message)
         {
-            var chatForbiddenWords = _chatService
-                .GetChatForbiddenWords(message.Chat.Id)
-                .ToArray();
+            var chatForbiddenWords = await _chatService
+                .GetForbiddenWordsAsync(message.Chat.Id);
             string response;
-            if (chatForbiddenWords.Length > 0)
+            if (chatForbiddenWords.Count > 0)
             {
                 string templates = string.Join('\n', chatForbiddenWords);
                 response = $"Строки-шаблоны в банлисте:\n{templates}";
