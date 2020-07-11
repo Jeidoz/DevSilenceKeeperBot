@@ -1,7 +1,6 @@
 ﻿using DevSilenceKeeperBot.Data.Entities;
 using DevSilenceKeeperBot.Data.Entities.ManyToMany;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace DevSilenceKeeperBot.Data
 {
@@ -10,16 +9,16 @@ namespace DevSilenceKeeperBot.Data
         public DbSet<Chat> Chats { get; set; }
         public DbSet<PromotedChatMember> PromotedMembers { get; set; }
         public DbSet<ForbiddenChatWord> ForbiddenChatWords { get; set; }
-        
+
         #region Many-To-Many table accestors
-        
+
         public DbSet<ChatToPromotedMember> ChatToPromotedMembers { get; set; }
 
-        #endregion
+        #endregion Many-To-Many table accestors
 
         public BotDbContext(DbContextOptions<BotDbContext> options) : base(options)
         {
-            
+            Database.Migrate();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -27,7 +26,7 @@ namespace DevSilenceKeeperBot.Data
             #region Many-To-Many Chats-PromotedMembers
 
             modelBuilder.Entity<ChatToPromotedMember>()
-                .HasKey(cpt => new {cpt.ChatId, cpt.PromotedMemberId});
+                .HasKey(cpt => new { cpt.ChatId, cpt.PromotedMemberId });
 
             modelBuilder.Entity<ChatToPromotedMember>()
                 .HasOne(cpm => cpm.Chat)
@@ -37,8 +36,8 @@ namespace DevSilenceKeeperBot.Data
                 .HasOne(cpm => cpm.PromotedChatMember)
                 .WithMany(cpm => cpm.Chats)
                 .HasForeignKey(cpm => cpm.PromotedMemberId);
-            
-            #endregion
+
+            #endregion Many-To-Many Chats-PromotedMembers
         }
     }
 }
