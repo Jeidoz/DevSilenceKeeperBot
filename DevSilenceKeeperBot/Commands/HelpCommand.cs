@@ -5,7 +5,7 @@ namespace DevSilenceKeeperBot.Commands
 {
     public sealed class HelpCommand : Command
     {
-        public override string[] Triggers => new[] {"/help"};
+        public override string[] Triggers => new[] { "/help" };
 
         public override async Task Execute(Message message)
         {
@@ -16,7 +16,7 @@ namespace DevSilenceKeeperBot.Commands
                                     "/add – добавить запрещенную строку-шаблон\n" +
                                     "/remove (/rm) – убрать запрещенную строку-шаблон\n" +
                                     "/delete (/del) – удалить сообщение\n" +
-                                    "/users (/promoted) – список участников с привилегиями\n" +
+                                    "/users – список участников с привилегиями\n" +
                                     "/mute [d.]HH:mm[:ss] - замутить участника на определенный срок\n" +
                                     "/unmute - розмутить участника\n" +
                                     "/promote - наддать привилегии особого участника чата\n" +
