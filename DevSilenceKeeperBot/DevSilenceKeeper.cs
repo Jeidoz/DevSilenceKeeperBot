@@ -24,7 +24,7 @@ namespace DevSilenceKeeperBot
 
         public DevSilenceKeeper(IChatService chatService)
         {
-            InitializeBotClientInstance(Program.Configuration["BotToken"]);
+            InitializeBotClientInstance(Program.Configuration.GetSection("BotToken").Value);
             BotClient.OnMessage += OnMessage;
             BotClient.OnCallbackQuery += OnCallbackQuery;
 
@@ -74,19 +74,9 @@ namespace DevSilenceKeeperBot
 
             foreach (var command in _callbackCommands.Where(command => command.Contains(e.CallbackQuery)))
             {
-                try
-                {
-                    await command.Execute(e.CallbackQuery);
-                    Log.Logger.Information(
-                        $"{e.CallbackQuery.From} запросил callback команду {command.Triggers[0] ?? command.GetType().Name}");
-                }
-                catch (Exception ex)
-                {
-                    string errorTemplate = $"Unpredictable error occured ({nameof(ex)}): {ex.Message}\n" +
-                                           $"Stack Trace: {ex.StackTrace}";
-                    Log.Error(ex, errorTemplate);
-                }
-
+                await command.Execute(e.CallbackQuery);
+                Log.Logger.Information(
+                    $"{e.CallbackQuery.From} запросил callback команду {command.Triggers[0] ?? command.GetType().Name}");
                 return;
             }
         }

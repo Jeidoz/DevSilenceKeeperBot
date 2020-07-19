@@ -1,7 +1,6 @@
 ﻿using DevSilenceKeeperBot.Data.Entities;
 using DevSilenceKeeperBot.Data.Entities.ManyToMany;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace DevSilenceKeeperBot.Data
 {
@@ -17,17 +16,9 @@ namespace DevSilenceKeeperBot.Data
 
         #endregion Many-To-Many table accestors
 
-        public BotDbContext()
-        {
-        }
-
         public BotDbContext(DbContextOptions<BotDbContext> options) : base(options)
         {
-        }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseMySql(Program.Configuration.GetConnectionString("MySql"));
+            Database.Migrate();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

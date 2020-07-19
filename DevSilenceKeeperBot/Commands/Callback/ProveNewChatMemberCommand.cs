@@ -7,17 +7,12 @@ namespace DevSilenceKeeperBot.Commands.Callback
 {
     public class ProveNewChatMemberCommand : CallbackCommand
     {
-        public override string[] Triggers => new[] { "verified" };
+        public override string[] Triggers => new[] {"verified"};
 
         public override async Task Execute(CallbackQuery query)
         {
             if (query.From.Id != InvokerId)
             {
-                var expectedChatMember = await DevSilenceKeeper.BotClient.GetChatMemberAsync(query.Message.Chat.Id, InvokerId);
-                await DevSilenceKeeper.BotClient.AnswerCallbackQueryAsync(
-                    query.Id,
-                    $"Эту кнопку должен нажать определенный участник чата — {expectedChatMember.User}.",
-                    true);
                 return;
             }
 
@@ -36,6 +31,7 @@ namespace DevSilenceKeeperBot.Commands.Callback
                 query.From.Id,
                 unmutePermissions,
                 DateTime.Now);
+
 
             DevSilenceKeeper.BotClient.SendTextMessageAsync(
                     query.Message.Chat.Id,
