@@ -1,6 +1,6 @@
-﻿using System;
+﻿using DevSilenceKeeperBot.Extensions;
+using System;
 using System.Threading.Tasks;
-using DevSilenceKeeperBot.Extensions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
@@ -27,36 +27,40 @@ namespace DevSilenceKeeperBot.Commands
 
         public override async Task Execute(Message message)
         {
-            if (await message.From.IsMuted(message.Chat.Id))
+            foreach (var newChatMember in message.NewChatMembers)
             {
-                var chatMember = await DevSilenceKeeper.BotClient.GetChatMemberAsync(message.Chat.Id, message.From.Id);
-                string replyText =
-                    $"С возвращением в чат! Ты ещё в муте до {chatMember.UntilDate:dd.MM.yyyy HH:mm:ss} (UTC+02:00)";
+                if (await newChatMember.IsMuted(message.Chat.Id))
+                {
+                    var chatMember = await DevSilenceKeeper.BotClient.GetChatMemberAsync(message.Chat.Id, newChatMember.Id);
+                    string replyText =
+                        $"С возвращением в чат! Ты ещё в муте до {chatMember.UntilDate:dd.MM.yyyy HH:mm:ss} (UTC+02:00)";
+                    await DevSilenceKeeper.BotClient.SendTextMessageAsync(
+                        message.Chat.Id,
+                        replyText,
+                        replyToMessageId: message.MessageId);
+                    return;
+                }
+
+                await DevSilenceKeeper.BotClient.RestrictChatMemberAsync(
+                    message.Chat.Id,
+                    newChatMember.Id,
+                    new ChatPermissions { CanSendMessages = false },
+                    DateTime.Now);
+
+                var captchaMarkup = new InlineKeyboardMarkup(
+                    new[]
+                    {
+                    // TODO Callback data class with implicit cast to string
+                    InlineKeyboardButton.WithCallbackData("Я не бот",
+                        $"{newChatMember.Id}:verified:{message.MessageId}")
+                    });
+
                 await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                     message.Chat.Id,
-                    replyText,
-                    replyToMessageId: message.MessageId);
-                return;
+                    $"{newChatMember} Нажми на кнопку, что бы получить возможность отсылать сообщения.",
+                    replyToMessageId: message.MessageId,
+                    replyMarkup: captchaMarkup);
             }
-
-            await DevSilenceKeeper.BotClient.RestrictChatMemberAsync(
-                message.Chat.Id,
-                message.From.Id,
-                new ChatPermissions {CanSendMessages = false},
-                DateTime.Now);
-
-            var captchaMarkup = new InlineKeyboardMarkup(
-                new[]
-                {
-                    // TODO Callback data class with implicit cast to string
-                    InlineKeyboardButton.WithCallbackData("Я не бот", $"{message.From.Id}:verified:{message.MessageId}")
-                });
-
-            await DevSilenceKeeper.BotClient.SendTextMessageAsync(
-                message.Chat.Id,
-                "Нажми на кнопку, что бы получить возможность отсылать сообщения.",
-                replyToMessageId: message.MessageId,
-                replyMarkup: captchaMarkup);
         }
     }
 }

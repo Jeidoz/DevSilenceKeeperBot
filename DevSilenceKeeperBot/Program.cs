@@ -1,14 +1,11 @@
-﻿using System;
-using System.IO;
-using DevSilenceKeeperBot.Data;
+﻿using DevSilenceKeeperBot.Data;
 using DevSilenceKeeperBot.Services;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Serilog;
-using Serilog.Sinks.File;
+using System;
+using System.IO;
 
 namespace DevSilenceKeeperBot
 {
@@ -20,12 +17,12 @@ namespace DevSilenceKeeperBot
             .AddEnvironmentVariables()
             .Build();
 
-        private static void Main()
+        public static void Main()
         {
             Log.Logger = new LoggerConfiguration()
                 .Enrich.FromLogContext()
                 .WriteTo.Console()
-                .WriteTo.File(Path.Combine("logs","DevSilenceKeeper.txt"), rollingInterval: RollingInterval.Day)
+                .WriteTo.File(Path.Combine("logs", "DevSilenceKeeper.txt"), rollingInterval: RollingInterval.Day)
                 .CreateLogger();
 
             try
@@ -40,21 +37,20 @@ namespace DevSilenceKeeperBot
             Log.CloseAndFlush();
         }
 
-        private static IHostBuilder CreateHostBuilder() =>
-            Host.CreateDefaultBuilder()
+        private static IHostBuilder CreateHostBuilder()
+        {
+            return Host.CreateDefaultBuilder()
+                .UseSystemd()
                 .ConfigureServices(services =>
                 {
                     services.AddLogging();
 
-                    services.AddDbContext<BotDbContext>(options =>
-                        options.UseMySql(Configuration.GetConnectionString("MySql")));
+                    services.AddDbContext<BotDbContext>();
+
                     services.AddScoped<IChatService, ChatService>();
                     services.AddSingleton<IHostedService, DevSilenceKeeper>();
                 })
-                .ConfigureLogging(configLogging =>
-                {
-                    configLogging.AddSerilog();
-                })
-                .UseConsoleLifetime();
+                .ConfigureLogging(configLogging => configLogging.AddSerilog(dispose: true));
+        }
     }
 }
