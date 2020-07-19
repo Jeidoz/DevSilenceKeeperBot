@@ -1,6 +1,6 @@
-﻿using System.Linq;
+﻿using DevSilenceKeeperBot.Extensions;
+using System.Linq;
 using System.Threading.Tasks;
-using DevSilenceKeeperBot.Extensions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -19,6 +19,11 @@ namespace DevSilenceKeeperBot.Commands
 
         public override bool Contains(Message message)
         {
+            if (string.IsNullOrEmpty(message.Text))
+            {
+                return false;
+            }
+
             var words = message.Text.RemoveSpecialCharacters().Split();
             return Triggers.Any(word => words.Contains(word))
                    && words.Length <= MaxWordsInHelloMessage;
