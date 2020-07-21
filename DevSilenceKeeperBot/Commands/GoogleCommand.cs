@@ -19,7 +19,7 @@ namespace DevSilenceKeeperBot.Commands
 
         public override bool Contains(Message message)
         {
-            if (string.IsNullOrEmpty(message.Text))
+            if (string.IsNullOrEmpty(message.Text) || Triggers is null)
             {
                 return false;
             }
