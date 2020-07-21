@@ -1,6 +1,7 @@
 ﻿using DevSilenceKeeperBot.Commands;
 using DevSilenceKeeperBot.Commands.Callback;
 using DevSilenceKeeperBot.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
@@ -93,8 +94,8 @@ namespace DevSilenceKeeperBot
 
         private void InitializeListOfBotCommands(out List<Command> commands)
         {
-            var helloWords = Program.Configuration["HelloWords"]?.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            var googleWords = Program.Configuration["GoogleWords"]?.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            var helloWords = Program.Configuration.GetSection("HelloWords").Get<string[]>();
+            var googleWords = Program.Configuration.GetSection("GoogleWords").Get<string[]>();
             commands = new List<Command>
             {
                 new HelpCommand(),
