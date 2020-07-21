@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using DevSilenceKeeperBot.Data;
+﻿using DevSilenceKeeperBot.Data;
 using DevSilenceKeeperBot.Data.Entities;
 using DevSilenceKeeperBot.Data.Entities.ManyToMany;
 using DevSilenceKeeperBot.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using Chat = DevSilenceKeeperBot.Data.Entities.Chat;
 
@@ -103,7 +103,7 @@ namespace DevSilenceKeeperBot.Services
                 .Include(c2pm => c2pm.Chat)
                 .Include(c2pm => c2pm.PromotedChatMember)
                     .ThenInclude(pm => pm.Chats)
-                .Where(c2pm => c2pm.ChatId == chatId)
+                .Where(c2pm => c2pm.Chat.ChatId == chatId)
                 .Select(c2pm => c2pm.PromotedChatMember)
                 .ToListAsync();
         }
@@ -114,7 +114,7 @@ namespace DevSilenceKeeperBot.Services
                 .Include(ch => ch.PromotedMembers)
                 .SingleAsync(ch => ch.ChatId == chatId);
             var chatMemberToUpdate = await _context.PromotedMembers
-                .FirstOrDefaultAsync(pm => pm.UserId == chatMember.Id) 
+                .FirstOrDefaultAsync(pm => pm.UserId == chatMember.Id)
                                      ?? await AddNewPromotedChatMember(chatMember);
 
             requestedChat.PromotedMembers.Add(new ChatToPromotedMember
@@ -123,7 +123,7 @@ namespace DevSilenceKeeperBot.Services
                 PromotedChatMember = chatMemberToUpdate
             });
             await _context.SaveChangesAsync();
-            
+
             return requestedChat;
         }
 
