@@ -24,6 +24,12 @@ namespace DevSilenceKeeperBot.Commands
                 return false;
             }
 
+            // Ignore forwarded messages
+            if (message.ForwardFrom != null)
+            {
+                return false;
+            }
+
             var words = message.Text.RemoveSpecialCharacters().Split();
             return Triggers.Any(word => words.Contains(word))
                    && words.Length <= MaxWordsInHelloMessage;
