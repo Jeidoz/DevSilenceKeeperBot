@@ -1,6 +1,7 @@
 ﻿using DevSilenceKeeperBot.Commands.Callback.Data;
 using DevSilenceKeeperBot.Extensions;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -9,6 +10,8 @@ namespace DevSilenceKeeperBot.Commands
 {
     public class VerifyNewChatMemberCommand : Command
     {
+        private readonly TimeSpan _timeLimitForVerification = TimeSpan.FromMinutes(3);
+
         public VerifyNewChatMemberCommand()
         {
             Triggers = null;
@@ -52,7 +55,10 @@ namespace DevSilenceKeeperBot.Commands
                 {
                     UserId = newChatMember.Id,
                     Trigger = "verified",
-                    Arguments = new[] { message.MessageId.ToString() }
+                    Arguments = new[]
+                    {
+                        message.MessageId.ToString()
+                    }
                 };
                 var captchaMarkup = new InlineKeyboardMarkup(
                     new[]
@@ -60,11 +66,30 @@ namespace DevSilenceKeeperBot.Commands
                         InlineKeyboardButton.WithCallbackData("Я не бот", callbackData.ToString())
                     });
 
-                await DevSilenceKeeper.BotClient.SendTextMessageAsync(
+                var verifyMessage = await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                     message.Chat.Id,
                     $"{newChatMember} Нажми на кнопку, что бы получить возможность отсылать сообщения.",
                     replyToMessageId: message.MessageId,
                     replyMarkup: captchaMarkup);
+
+                await Task.Run(async () =>
+                {
+                    Thread.Sleep(_timeLimitForVerification);
+                    try
+                    {
+                        await DevSilenceKeeper.BotClient.DeleteMessageAsync(verifyMessage.Chat.Id, verifyMessage.MessageId);
+                        await DevSilenceKeeper.BotClient.SendTextMessageAsync(
+                            message.Chat.Id,
+                            $"{newChatMember} не прошел проверку на бота, за отведенное время ({_timeLimitForVerification.TotalSeconds} c.) и был кикнут из чата.",
+                            replyToMessageId: message.MessageId);
+                        await DevSilenceKeeper.BotClient.KickChatMemberAsync(message.Chat.Id, newChatMember.Id);
+                        await DevSilenceKeeper.BotClient.UnbanChatMemberAsync(message.Chat.Id, newChatMember.Id);
+                    }
+                    catch
+                    {
+                        // User complete verification, because can't delete not existing message
+                    }
+                });
             }
         }
     }
