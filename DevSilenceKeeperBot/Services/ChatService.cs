@@ -15,28 +15,29 @@ namespace DevSilenceKeeperBot.Services
     public sealed class ChatService : IChatService
     {
         private const int MinForbiddenWordLength = 4;
-        private readonly BotDbContext _context;
+        private readonly IBotDbContextFactory _contextFactory;
 
-        public ChatService(BotDbContext context)
+        public ChatService(IBotDbContextFactory factory)
         {
-            _context = context;
+            _contextFactory = factory;
         }
 
         private async Task<Chat> GetChatById(long chatId)
         {
-            var chat = await _context.Chats.FirstOrDefaultAsync(ch => ch.ChatId == chatId);
+            await using var context = _contextFactory.CreateDbContext();
+            var chat = await context.Chats.FirstOrDefaultAsync(ch => ch.ChatId == chatId);
             if (chat != null)
             {
                 return chat;
             }
 
             chat = new Chat(chatId);
-            _context.Chats.Add(chat);
-            await _context.SaveChangesAsync();
+            context.Chats.Add(chat);
+            await context.SaveChangesAsync();
             return chat;
         }
 
-        private void ValidateForbiddenWord(string word)
+        private void ValidateForbiddenWord(in string word)
         {
             if (string.IsNullOrWhiteSpace(word))
             {
@@ -49,9 +50,10 @@ namespace DevSilenceKeeperBot.Services
             }
         }
 
-        public Task<List<string>> GetForbiddenWordsAsync(long chatId)
+        public async Task<List<string>> GetForbiddenWordsAsync(long chatId)
         {
-            return _context.ForbiddenChatWords
+            await using var context = _contextFactory.CreateDbContext();
+            return await context.ForbiddenChatWords
                 .Where(word => word.Chat.ChatId == chatId)
                 .Select(word => word.Word)
                 .ToListAsync();
@@ -74,8 +76,9 @@ namespace DevSilenceKeeperBot.Services
                 Word = word
             };
             requestedChat.ForbiddenWords.Add(newForbiddenWord);
-            _context.Chats.Update(requestedChat);
-            await _context.SaveChangesAsync();
+            await using var context = _contextFactory.CreateDbContext();
+            context.Entry(await GetChatById(chatId)).CurrentValues.SetValues(requestedChat);
+            await context.SaveChangesAsync();
             return requestedChat;
         }
 
@@ -89,20 +92,22 @@ namespace DevSilenceKeeperBot.Services
                     nameof(word));
             }
 
-            var wordToRemove = await _context.ForbiddenChatWords
+            await using var context = _contextFactory.CreateDbContext();
+            var wordToRemove = await context.ForbiddenChatWords
                 .FirstAsync(w => w.Chat.ChatId == chatId && w.Word == word);
-            _context.ForbiddenChatWords.Remove(wordToRemove);
-            await _context.SaveChangesAsync();
-            return await _context.Chats.SingleAsync(ch => ch.ChatId == chatId);
-
+            context.ForbiddenChatWords.Remove(wordToRemove);
+            await context.SaveChangesAsync();
+            var chat = await context.Chats.SingleAsync(ch => ch.ChatId == chatId);
+            return chat;
         }
 
-        public Task<List<PromotedChatMember>> GetPromotedMembersAsync(long chatId)
+        public async Task<List<PromotedChatMember>> GetPromotedMembersAsync(long chatId)
         {
-            return _context.ChatToPromotedMembers
+            await using var context = _contextFactory.CreateDbContext();
+            return await context.ChatToPromotedMembers
                 .Include(c2pm => c2pm.Chat)
                 .Include(c2pm => c2pm.PromotedChatMember)
-                    .ThenInclude(pm => pm.Chats)
+                .ThenInclude(pm => pm.Chats)
                 .Where(c2pm => c2pm.Chat.ChatId == chatId)
                 .Select(c2pm => c2pm.PromotedChatMember)
                 .ToListAsync();
@@ -110,11 +115,12 @@ namespace DevSilenceKeeperBot.Services
 
         public async Task<Chat> AddPromotedMemberAsync(long chatId, User chatMember)
         {
-            var requestedChat = await _context.Chats
+            await using var context = _contextFactory.CreateDbContext();
+            var requestedChat = await context.Chats
                 .Include(ch => ch.PromotedMembers)
                 .SingleAsync(ch => ch.ChatId == chatId);
-            var chatMemberToUpdate = await _context.PromotedMembers
-                .FirstOrDefaultAsync(pm => pm.UserId == chatMember.Id)
+            var chatMemberToUpdate = await context.PromotedMembers
+                                         .FirstOrDefaultAsync(pm => pm.UserId == chatMember.Id)
                                      ?? await AddNewPromotedChatMember(chatMember);
 
             requestedChat.PromotedMembers.Add(new ChatToPromotedMember
@@ -122,27 +128,29 @@ namespace DevSilenceKeeperBot.Services
                 Chat = requestedChat,
                 PromotedChatMember = chatMemberToUpdate
             });
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
             return requestedChat;
         }
 
         private async Task<PromotedChatMember> AddNewPromotedChatMember(User user)
         {
+            await using var context = _contextFactory.CreateDbContext();
             var promotedMember = new PromotedChatMember(user);
-            _context.PromotedMembers.Add(promotedMember);
-            await _context.SaveChangesAsync();
+            context.PromotedMembers.Add(promotedMember);
+            await context.SaveChangesAsync();
             return promotedMember;
         }
 
         public async Task RemovePromotedMemberAsync(long chatId, int memberId)
         {
-            var memberToRemove = await _context.ChatToPromotedMembers
+            await using var context = _contextFactory.CreateDbContext();
+            var memberToRemove = await context.ChatToPromotedMembers
                 .Include(c2pm => c2pm.PromotedChatMember)
                 .Include(c2pm => c2pm.Chat)
                 .SingleAsync(c2pm => c2pm.Chat.Id == chatId && c2pm.PromotedChatMember.UserId == memberId);
-            _context.ChatToPromotedMembers.Remove(memberToRemove);
-            await _context.SaveChangesAsync();
+            context.ChatToPromotedMembers.Remove(memberToRemove);
+            await context.SaveChangesAsync();
         }
     }
 }

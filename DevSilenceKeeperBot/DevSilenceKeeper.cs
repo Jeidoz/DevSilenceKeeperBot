@@ -22,6 +22,8 @@ namespace DevSilenceKeeperBot
     {
         public static ITelegramBotClient BotClient;
 
+        private readonly List<Task> _tasks = new List<Task>();
+
         private readonly IChatService _chatService;
         private readonly List<Command> _commands;
         private readonly List<CallbackCommand> _callbackCommands;
@@ -43,30 +45,35 @@ namespace DevSilenceKeeperBot
 
         private async Task HandleUpdateAsync(ITelegramBotClient _, Update update, CancellationToken cancellationToken)
         {
-            var handler = update.Type switch
-            {
-                UpdateType.Message => OnMessage(update.Message),
-                UpdateType.EditedMessage => OnMessage(update.Message),
-                UpdateType.CallbackQuery => OnCallbackQuery(update.CallbackQuery),
-                _ => UnknownUpdateHandlerAsync(update)
-            };
-
             try
             {
-                await handler;
+                switch (update.Type)
+                {
+                    case UpdateType.Message:
+                    case UpdateType.EditedMessage:
+                        OnMessage(update.Message);
+                        break;
+                    case UpdateType.CallbackQuery:
+                        OnCallbackQuery(update.CallbackQuery);
+                        break;
+                    default:
+                        UnknownUpdateHandler(update);
+                        break;
+                }
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                await HandleErrorAsync(_, exception, cancellationToken);
+                await HandleError(_, ex, cancellationToken);
             }
+
         }
 
-        private async Task UnknownUpdateHandlerAsync(Update update)
+        private void UnknownUpdateHandler(Update update)
         {
             Console.WriteLine($"Unknown update type: {update.Type}");
         }
 
-        private async Task HandleErrorAsync(ITelegramBotClient _, Exception exception, CancellationToken cancellationToken)
+        private async Task HandleError(ITelegramBotClient _, Exception exception, CancellationToken cancellationToken)
         {
             var errorMessage = exception switch
             {
@@ -77,7 +84,7 @@ namespace DevSilenceKeeperBot
             Console.WriteLine(errorMessage);
         }
 
-        private async Task OnMessage(Message message)
+        private async void OnMessage(Message message)
         {
             if (string.IsNullOrEmpty(message.Text) && message.NewChatMembers == null)
             {
@@ -110,7 +117,7 @@ namespace DevSilenceKeeperBot
             }
         }
 
-        private async Task OnCallbackQuery(CallbackQuery callbackQuery)
+        private async void OnCallbackQuery(CallbackQuery callbackQuery)
         {
             if (string.IsNullOrEmpty(callbackQuery.Data))
             {
@@ -197,7 +204,7 @@ namespace DevSilenceKeeperBot
         private void StartPolling(CancellationToken cancellationToken)
         {
             BotClient.StartReceiving(
-                new DefaultUpdateHandler(HandleUpdateAsync, HandleErrorAsync),
+                new DefaultUpdateHandler(HandleUpdateAsync, HandleError),
                 cancellationToken);
             Log.Logger.Information("Бот начал обрабатывать сообщения...");
         }

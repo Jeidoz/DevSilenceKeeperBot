@@ -1,5 +1,6 @@
 ﻿using DevSilenceKeeperBot.Data;
 using DevSilenceKeeperBot.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -45,8 +46,10 @@ namespace DevSilenceKeeperBot
                 {
                     services.AddLogging();
 
-                    services.AddDbContext<BotDbContext>();
-
+                    var contextOptions = new DbContextOptionsBuilder<BotDbContext>()
+                        .UseMySql(Configuration.GetConnectionString("MySql"))
+                        .Options;
+                    services.AddScoped<IBotDbContextFactory>(_ => new BotDbContextFactory(contextOptions));
                     services.AddScoped<IChatService, ChatService>();
                     services.AddSingleton<IHostedService, DevSilenceKeeper>();
                 })
