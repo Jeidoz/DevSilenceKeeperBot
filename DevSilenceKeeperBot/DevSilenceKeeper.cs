@@ -66,7 +66,7 @@ namespace DevSilenceKeeperBot
                     string commandIdentifier = command.Triggers != null
                         ? command.Triggers.First()
                         : command.GetType().Name;
-                    Log.Logger.Information($"{message.From} запросил команду {commandIdentifier}");
+                    Log.Logger.Information($"{message.From} (@{message.Chat.Username}) запросил команду {commandIdentifier}: {message.Text}");
                 }
 
                 await command.Execute(message);
@@ -88,7 +88,7 @@ namespace DevSilenceKeeperBot
                 try
                 {
                     Log.Logger.Information(
-                        $"{callbackQuery.From} запросил callback команду {command.Triggers[0] ?? command.GetType().Name}");
+                        $"{callbackQuery.From} запросил callback команду {command.Triggers[0] ?? command.GetType().Name}: {callbackQuery.Data}");
                     await command.Execute(callbackQuery);
                 }
                 catch (Exception ex)
