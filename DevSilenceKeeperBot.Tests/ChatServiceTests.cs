@@ -1,3 +1,6 @@
+
+// ReSharper disable StringLiteralTypo
+
 using DevSilenceKeeperBot.Data;
 using DevSilenceKeeperBot.Data.Entities;
 using DevSilenceKeeperBot.Data.Entities.ManyToMany;
@@ -9,8 +12,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
-
-// ReSharper disable StringLiteralTypo
 
 namespace DevSilenceKeeperBot.Tests
 {
@@ -28,15 +29,16 @@ namespace DevSilenceKeeperBot.Tests
 
         #region Context seed methods
 
-        private BotDbContext GetContextWithFilledChat()
+        private static BotDbContext GetContextWithFilledChat()
         {
             var context = new BotDbContext(CreateNewContextOptions());
+            context.Database.EnsureDeleted();
             AddOnePromotedChatMember(context);
             AddOneChatWithTwoForbiddenWordsAndOnePromotedMember(context);
             return context;
         }
 
-        private void AddOnePromotedChatMember(BotDbContext context)
+        private static void AddOnePromotedChatMember(BotDbContext context)
         {
             var promotedChatMember = new PromotedChatMember
             {
@@ -49,7 +51,7 @@ namespace DevSilenceKeeperBot.Tests
             context.SaveChanges();
         }
 
-        private void AddOneChatWithTwoForbiddenWordsAndOnePromotedMember(BotDbContext context)
+        private static void AddOneChatWithTwoForbiddenWordsAndOnePromotedMember(BotDbContext context)
         {
             var chat = new Chat(ChatId)
             {
@@ -72,9 +74,10 @@ namespace DevSilenceKeeperBot.Tests
             context.SaveChanges();
         }
 
-        private BotDbContext GetContextWithEmptyChat()
+        private static BotDbContext GetContextWithEmptyChat()
         {
             var context = new BotDbContext(CreateNewContextOptions());
+            context.Database.EnsureDeleted();
             context.Chats.Add(new Chat(ChatId));
             context.SaveChanges();
             return context;
@@ -82,13 +85,43 @@ namespace DevSilenceKeeperBot.Tests
 
         #endregion Context seed methods
 
+        #region Fakes of IBotDbContextFactory
+
+        private class EmptyDbContextFactory : IBotDbContextFactory
+        {
+            public BotDbContext CreateDbContext()
+            {
+                var context = new BotDbContext(CreateNewContextOptions());
+                context.Database.EnsureDeleted();
+                return context;
+            }
+        }
+
+        private class EmptyChatDbContextFactory : IBotDbContextFactory
+        {
+            public BotDbContext CreateDbContext()
+            {
+                return GetContextWithEmptyChat();
+            }
+        }
+
+        private class FilledChatDbContextFactory : IBotDbContextFactory
+        {
+            public BotDbContext CreateDbContext()
+            {
+                return GetContextWithFilledChat();
+            }
+        }
+
+        #endregion
+
         #region GetForbiddenWordsAsync
 
         [Fact]
         public async Task GetForbiddenWordsAsync_NonExistingChat_ReturnsEmptyList()
         {
             // Arrange
-            var service = new ChatService(new BotDbContext(CreateNewContextOptions()));
+            var service = new ChatService(new EmptyDbContextFactory());
 
             // Act
             var words = await service.GetForbiddenWordsAsync(ChatId);
@@ -101,14 +134,12 @@ namespace DevSilenceKeeperBot.Tests
         public async Task GetForbiddenWordsAsync_ChatWithoutForbiddenWords_ReturnsEmptyList()
         {
             // Arrange
-            var context = GetContextWithEmptyChat();
-            var service = new ChatService(context);
+            var service = new ChatService(new EmptyChatDbContextFactory());
 
             // Act
             var words = await service.GetForbiddenWordsAsync(ChatId);
 
             // Assert
-            Assert.True(context.Chats.Any(ch => ch.ChatId == ChatId));
             Assert.Empty(words);
         }
 
@@ -116,8 +147,7 @@ namespace DevSilenceKeeperBot.Tests
         public async Task GetPromotedMembersAsync_ChatWithForbiddenWords_ReturnsListWithForbiddenWords()
         {
             // Arrange
-            var context = GetContextWithFilledChat();
-            var service = new ChatService(context);
+            var service = new ChatService(new FilledChatDbContextFactory());
 
             // Act
             var words = await service.GetForbiddenWordsAsync(ChatId);
@@ -137,8 +167,7 @@ namespace DevSilenceKeeperBot.Tests
         public async Task AddForbiddenWordAsync_Null_ThrowsArgumentNullException()
         {
             // Arrange
-            var context = GetContextWithEmptyChat();
-            var service = new ChatService(context);
+            var service = new ChatService(new EmptyChatDbContextFactory());
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentNullException>(async () =>
@@ -150,8 +179,7 @@ namespace DevSilenceKeeperBot.Tests
         public async Task AddForbiddenWordAsync_EmptyString_ThrowsArgumentNullException()
         {
             // Arrange
-            var context = GetContextWithEmptyChat();
-            var service = new ChatService(context);
+            var service = new ChatService(new EmptyChatDbContextFactory());
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentNullException>(async () =>
@@ -163,8 +191,7 @@ namespace DevSilenceKeeperBot.Tests
         public async Task AddForbiddenWordAsync_UnderMinLengthWord_ThrowsArgumentException()
         {
             // Arrange
-            var context = GetContextWithEmptyChat();
-            var service = new ChatService(context);
+            var service = new ChatService(new EmptyChatDbContextFactory());
 
             // Assert
             await Assert.ThrowsAsync<ArgumentException>(async () =>
@@ -176,8 +203,7 @@ namespace DevSilenceKeeperBot.Tests
         public async Task AddForbiddenWordAsync_CorrectWord_ReturnsChatWithAddedForbiddenWord()
         {
             // Arrange
-            var context = GetContextWithEmptyChat();
-            var service = new ChatService(context);
+            var service = new ChatService(new EmptyChatDbContextFactory());
 
             // Act
             var chatWithForbiddenWord = await service.AddForbiddenWordAsync(ChatId, "java");
@@ -192,8 +218,7 @@ namespace DevSilenceKeeperBot.Tests
         public async Task AddForbiddenWordAsync_DuplicateWord_ThrowsAddingDuplicateRecordException()
         {
             // Arrange
-            var context = GetContextWithFilledChat();
-            var service = new ChatService(context);
+            var service = new ChatService(new FilledChatDbContextFactory());
 
             // Act & Assert
             await Assert.ThrowsAsync<AddingDuplicateRecord>(async () =>
@@ -205,14 +230,12 @@ namespace DevSilenceKeeperBot.Tests
         public async Task AddForbiddenWordAsync_CorrectWordAndNonExistChat_ReturnsChatWithForbiddenWord()
         {
             // Arrange
-            var context = new BotDbContext(CreateNewContextOptions());
-            var service = new ChatService(context);
+            var service = new ChatService(new EmptyDbContextFactory());
 
             // Act
             var chatWithForbiddenWord = await service.AddForbiddenWordAsync(ChatId, "java");
 
             // Assert
-            Assert.True(context.Chats.Any(ch => ch.ChatId == ChatId));
             Assert.Collection(chatWithForbiddenWord.ForbiddenWords,
                 item => Assert.Equal("java", item.Word));
         }
@@ -225,8 +248,7 @@ namespace DevSilenceKeeperBot.Tests
         private async Task RemoveForbiddenWordAsync_Null_ThrowsNullArgumentException()
         {
             // Arrange
-            var context = GetContextWithEmptyChat();
-            var service = new ChatService(context);
+            var service = new ChatService(new EmptyChatDbContextFactory());
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentNullException>(async () =>
@@ -238,8 +260,7 @@ namespace DevSilenceKeeperBot.Tests
         private async Task RemoveForbiddenWordAsync_EmptyString_ThrowsNullArgumentException()
         {
             // Arrange
-            var context = GetContextWithEmptyChat();
-            var service = new ChatService(context);
+            var service = new ChatService(new EmptyChatDbContextFactory());
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentNullException>(async () =>
@@ -251,8 +272,7 @@ namespace DevSilenceKeeperBot.Tests
         private async Task RemoveForbiddenWordAsync_UnderMinLengthWord_ThrowsArgumentException()
         {
             // Arrange
-            var context = GetContextWithEmptyChat();
-            var service = new ChatService(context);
+            var service = new ChatService(new EmptyChatDbContextFactory());
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(async () =>
@@ -264,8 +284,7 @@ namespace DevSilenceKeeperBot.Tests
         public async Task RemoveForbiddenWordAsync_NotBannedWord_ThrowsRemovingNotExistingRecordException()
         {
             // Arrange
-            var context = GetContextWithFilledChat();
-            var service = new ChatService(context);
+            var service = new ChatService(new FilledChatDbContextFactory());
 
             // Act & Assert
             await Assert.ThrowsAsync<RemovingNotExistingRecordException>(async () =>
@@ -277,14 +296,12 @@ namespace DevSilenceKeeperBot.Tests
         private async Task RemoveForbiddenWordAsync_CorrectWord_ReturnsChatWithRemovedForbiddenWord()
         {
             // Arrange
-            var context = GetContextWithFilledChat();
-            var service = new ChatService(context);
+            var service = new ChatService(new FilledChatDbContextFactory());
 
             // Act
             var chatWithForbiddenWord = await service.RemoveForbiddenWordAsync(ChatId, "abcd");
 
             // Assert
-            Assert.True(context.Chats.Any(ch => ch.ChatId == ChatId));
             Assert.Equal(1, chatWithForbiddenWord.ForbiddenWords.Count);
             Assert.Collection(chatWithForbiddenWord.ForbiddenWords,
                 item => Assert.Equal("1234", item.Word));
@@ -298,7 +315,7 @@ namespace DevSilenceKeeperBot.Tests
         public async Task GetPromotedMembersAsync_NonExistingChat_ReturnsEmptyList()
         {
             // Arrange
-            var service = new ChatService(new BotDbContext(CreateNewContextOptions()));
+            var service = new ChatService(new EmptyDbContextFactory());
 
             // Act
             var promotedMembers = await service.GetPromotedMembersAsync(ChatId);
@@ -311,14 +328,12 @@ namespace DevSilenceKeeperBot.Tests
         public async Task GetPromotedMembersAsync_ChatWithoutForbiddenWords_ReturnsEmptyList()
         {
             // Arrange
-            var context = GetContextWithEmptyChat();
-            var service = new ChatService(context);
+            var service = new ChatService(new EmptyChatDbContextFactory());
 
             // Act
             var promotedMembers = await service.GetPromotedMembersAsync(ChatId);
 
             // Assert
-            Assert.True(context.Chats.Any(ch => ch.ChatId == ChatId));
             Assert.Empty(promotedMembers);
         }
 
@@ -326,8 +341,7 @@ namespace DevSilenceKeeperBot.Tests
         public async Task GetForbiddenWordsAsync_ChatWithPromotedMembers_ReturnsListWithPromotedMembers()
         {
             // Arrange
-            var context = GetContextWithFilledChat();
-            var service = new ChatService(context);
+            var service = new ChatService(new FilledChatDbContextFactory());
 
             // Act
             var promotedMembers = await service.GetPromotedMembersAsync(ChatId);
