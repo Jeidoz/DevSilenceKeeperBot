@@ -1,6 +1,5 @@
 ﻿using DevSilenceKeeperBot.Extensions;
 using DevSilenceKeeperBot.Services;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -73,18 +72,17 @@ namespace DevSilenceKeeperBot.Commands
             }
             else
             {
-                var until = DateTime.Now.AddSeconds(31);
-                var kickChatMemberTask = DevSilenceKeeper.BotClient.KickChatMemberAsync(
-                    message.Chat.Id,
-                    message.From.Id,
-                    until);
+                var kickChatMemberTask =
+                    DevSilenceKeeper.BotClient.KickChatMemberAsync(message.Chat.Id, message.From.Id);
+                var unbanKickedChatMemberTask =
+                    DevSilenceKeeper.BotClient.UnbanChatMemberAsync(message.Chat.Id, message.From.Id);
 
                 Task reportAboutKickTask = DevSilenceKeeper.BotClient.SendTextMessageAsync(
                     message.Chat.Id,
                     $"Пользователь {message.From} нарушил правила чата!",
                     replyToMessageId: message.MessageId);
 
-                tasks.AddRange(new List<Task> { kickChatMemberTask, reportAboutKickTask });
+                tasks.AddRange(new List<Task> { kickChatMemberTask, unbanKickedChatMemberTask, reportAboutKickTask });
             }
 
             Task.WaitAll(tasks.ToArray());
