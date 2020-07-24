@@ -1,4 +1,5 @@
-﻿using DevSilenceKeeperBot.Extensions;
+﻿using DevSilenceKeeperBot.Commands.Callback.Data;
+using DevSilenceKeeperBot.Extensions;
 using System;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
@@ -47,12 +48,16 @@ namespace DevSilenceKeeperBot.Commands
                     new ChatPermissions { CanSendMessages = false },
                     DateTime.Now);
 
+                var callbackData = new CallbackQueryData
+                {
+                    UserId = newChatMember.Id,
+                    Trigger = "verified",
+                    Arguments = new[] { message.MessageId.ToString() }
+                };
                 var captchaMarkup = new InlineKeyboardMarkup(
                     new[]
                     {
-                    // TODO Callback data class with implicit cast to string
-                    InlineKeyboardButton.WithCallbackData("Я не бот",
-                        $"{newChatMember.Id}:verified:{message.MessageId}")
+                        InlineKeyboardButton.WithCallbackData("Я не бот", callbackData.ToString())
                     });
 
                 await DevSilenceKeeper.BotClient.SendTextMessageAsync(

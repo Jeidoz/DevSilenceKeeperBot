@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DevSilenceKeeperBot.Commands.Callback.Data;
+using System;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -11,9 +12,10 @@ namespace DevSilenceKeeperBot.Commands.Callback
 
         public override async Task Execute(CallbackQuery query)
         {
-            if (query.From.Id != InvokerId)
+            var queryData = new CallbackQueryData(query.Data);
+            if (query.From.Id != queryData.UserId)
             {
-                var expectedChatMember = await DevSilenceKeeper.BotClient.GetChatMemberAsync(query.Message.Chat.Id, InvokerId);
+                var expectedChatMember = await DevSilenceKeeper.BotClient.GetChatMemberAsync(query.Message.Chat.Id, queryData.UserId);
                 await DevSilenceKeeper.BotClient.AnswerCallbackQueryAsync(
                     query.Id,
                     $"Эту кнопку должен нажать определенный участник чата — {expectedChatMember.User}.",
