@@ -47,7 +47,7 @@ namespace DevSilenceKeeperBot
                     services.AddLogging();
 
                     var contextOptions = new DbContextOptionsBuilder<BotDbContext>()
-                        .UseMySql(Configuration.GetConnectionString("MySql"))
+                        .UseMySql(Configuration.GetConnectionString("MySql"), opt => opt.EnableRetryOnFailure())
                         .Options;
                     services.AddScoped<IBotDbContextFactory>(_ => new BotDbContextFactory(contextOptions));
                     services.AddScoped<IChatService, ChatService>();

@@ -10,10 +10,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
-using Telegram.Bot.Exceptions;
-using Telegram.Bot.Extensions.Polling;
-using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Args;
 
 namespace DevSilenceKeeperBot
 {
@@ -21,8 +18,6 @@ namespace DevSilenceKeeperBot
     public sealed class DevSilenceKeeper : IHostedService
     {
         public static ITelegramBotClient BotClient;
-
-        private readonly List<Task> _tasks = new List<Task>();
 
         private readonly IChatService _chatService;
         private readonly List<Command> _commands;
@@ -36,6 +31,9 @@ namespace DevSilenceKeeperBot
             InitializeListOfBotCallbackCommands(out _callbackCommands);
 
             InitializeBotClientInstance(Program.Configuration["BotToken"]);
+            BotClient.OnMessage += OnMessage;
+            BotClient.OnMessageEdited += OnMessage;
+            BotClient.OnCallbackQuery += OnCallbackQuery;
         }
 
         private static void InitializeBotClientInstance(string botToken)
@@ -43,49 +41,9 @@ namespace DevSilenceKeeperBot
             BotClient = new TelegramBotClient(botToken);
         }
 
-        private async Task HandleUpdateAsync(ITelegramBotClient _, Update update, CancellationToken cancellationToken)
+        private async void OnMessage(object sender, MessageEventArgs e)
         {
-            try
-            {
-                switch (update.Type)
-                {
-                    case UpdateType.Message:
-                    case UpdateType.EditedMessage:
-                        OnMessage(update.Message);
-                        break;
-                    case UpdateType.CallbackQuery:
-                        OnCallbackQuery(update.CallbackQuery);
-                        break;
-                    default:
-                        UnknownUpdateHandler(update);
-                        break;
-                }
-            }
-            catch (Exception ex)
-            {
-                await HandleError(_, ex, cancellationToken);
-            }
-
-        }
-
-        private void UnknownUpdateHandler(Update update)
-        {
-            Console.WriteLine($"Unknown update type: {update.Type}");
-        }
-
-        private async Task HandleError(ITelegramBotClient _, Exception exception, CancellationToken cancellationToken)
-        {
-            var errorMessage = exception switch
-            {
-                ApiRequestException apiRequestException => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
-                _ => exception.ToString()
-            };
-
-            Console.WriteLine(errorMessage);
-        }
-
-        private async void OnMessage(Message message)
-        {
+            var message = e.Message;
             if (string.IsNullOrEmpty(message.Text) && message.NewChatMembers == null)
             {
                 return;
@@ -117,8 +75,9 @@ namespace DevSilenceKeeperBot
             }
         }
 
-        private async void OnCallbackQuery(CallbackQuery callbackQuery)
+        private async void OnCallbackQuery(object sender, CallbackQueryEventArgs e)
         {
+            var callbackQuery = e.CallbackQuery;
             if (string.IsNullOrEmpty(callbackQuery.Data))
             {
                 return;
@@ -203,9 +162,7 @@ namespace DevSilenceKeeperBot
 
         private void StartPolling(CancellationToken cancellationToken)
         {
-            BotClient.StartReceiving(
-                new DefaultUpdateHandler(HandleUpdateAsync, HandleError),
-                cancellationToken);
+            BotClient.StartReceiving(cancellationToken: cancellationToken);
             Log.Logger.Information("Бот начал обрабатывать сообщения...");
         }
 
