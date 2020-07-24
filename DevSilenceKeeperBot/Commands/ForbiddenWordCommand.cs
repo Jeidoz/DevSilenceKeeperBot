@@ -1,9 +1,9 @@
-﻿using System;
+﻿using DevSilenceKeeperBot.Extensions;
+using DevSilenceKeeperBot.Services;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using DevSilenceKeeperBot.Extensions;
-using DevSilenceKeeperBot.Services;
 using Telegram.Bot.Types;
 
 namespace DevSilenceKeeperBot.Commands
@@ -27,15 +27,16 @@ namespace DevSilenceKeeperBot.Commands
                 return false;
             }
 
-            var temp = _chatService
-                .GetForbiddenWordsAsync(message.Chat.Id)
-                .Result;
-            if (temp == null)
+            var task = _chatService.GetForbiddenWordsAsync(message.Chat.Id);
+            task.Wait();
+            var result = task.Result;
+
+            if (result == null)
             {
                 return false;
             }
 
-            var chatForbiddenWords = temp.ToArray();
+            var chatForbiddenWords = result.ToArray();
 
             if (!chatForbiddenWords.Any())
             {
@@ -83,7 +84,7 @@ namespace DevSilenceKeeperBot.Commands
                     $"Пользователь {message.From} нарушил правила чата!",
                     replyToMessageId: message.MessageId);
 
-                tasks.AddRange(new List<Task> {kickChatMemberTask, reportAboutKickTask});
+                tasks.AddRange(new List<Task> { kickChatMemberTask, reportAboutKickTask });
             }
 
             Task.WaitAll(tasks.ToArray());

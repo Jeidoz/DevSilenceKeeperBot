@@ -10,7 +10,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
-using Telegram.Bot.Args;
+using Telegram.Bot.Exceptions;
+using Telegram.Bot.Extensions.Polling;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace DevSilenceKeeperBot
 {
@@ -25,14 +28,12 @@ namespace DevSilenceKeeperBot
 
         public DevSilenceKeeper(IChatService chatService)
         {
-            InitializeBotClientInstance(Program.Configuration["BotToken"]);
-            BotClient.OnMessage += OnMessage;
-            BotClient.OnCallbackQuery += OnCallbackQuery;
-
             _chatService = chatService;
 
             InitializeListOfBotCommands(out _commands);
             InitializeListOfBotCallbackCommands(out _callbackCommands);
+
+            InitializeBotClientInstance(Program.Configuration["BotToken"]);
         }
 
         private static void InitializeBotClientInstance(string botToken)
@@ -40,46 +41,89 @@ namespace DevSilenceKeeperBot
             BotClient = new TelegramBotClient(botToken);
         }
 
-        private async void OnMessage(object sender, MessageEventArgs e)
+        private async Task HandleUpdateAsync(ITelegramBotClient _, Update update, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(e.Message.Text) && e.Message.NewChatMembers == null)
+            var handler = update.Type switch
+            {
+                UpdateType.Message => OnMessage(update.Message),
+                UpdateType.EditedMessage => OnMessage(update.Message),
+                UpdateType.CallbackQuery => OnCallbackQuery(update.CallbackQuery),
+                _ => UnknownUpdateHandlerAsync(update)
+            };
+
+            try
+            {
+                await handler;
+            }
+            catch (Exception exception)
+            {
+                await HandleErrorAsync(_, exception, cancellationToken);
+            }
+        }
+
+        private async Task UnknownUpdateHandlerAsync(Update update)
+        {
+            Console.WriteLine($"Unknown update type: {update.Type}");
+        }
+
+        private async Task HandleErrorAsync(ITelegramBotClient _, Exception exception, CancellationToken cancellationToken)
+        {
+            var errorMessage = exception switch
+            {
+                ApiRequestException apiRequestException => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
+                _ => exception.ToString()
+            };
+
+            Console.WriteLine(errorMessage);
+        }
+
+        private async Task OnMessage(Message message)
+        {
+            if (string.IsNullOrEmpty(message.Text) && message.NewChatMembers == null)
             {
                 return;
             }
 
-            foreach (var command in _commands.Where(command => command.Contains(e.Message)))
+            var chatAdmins = await BotClient.GetChatAdministratorsAsync(message.Chat.Id);
+            if (chatAdmins.All(admin => admin.User.Id != BotClient.BotId))
             {
-                await command.Execute(e.Message);
+                return;
+            }
+
+            foreach (var command in _commands.Where(command => command.Contains(message)))
+            {
                 if (command is ForbiddenWordCommand)
                 {
-                    Log.Logger.Information($"{e.Message.From} нарушил правила чата: \"{e.Message.Text}\"");
+                    Log.Logger.Information($"{message.From} нарушил правила чата: \"{message.Text}\"");
                 }
                 else
                 {
                     string commandIdentifier = command.Triggers != null
                         ? command.Triggers.First()
                         : command.GetType().Name;
-                    Log.Logger.Information($"{e.Message.From} запросил команду {commandIdentifier}");
+                    Log.Logger.Information($"{message.From} запросил команду {commandIdentifier}");
                 }
+
+                await command.Execute(message);
 
                 return;
             }
         }
 
-        private async void OnCallbackQuery(object sender, CallbackQueryEventArgs e)
+        private async Task OnCallbackQuery(CallbackQuery callbackQuery)
         {
-            if (string.IsNullOrEmpty(e.CallbackQuery.Data))
+            if (string.IsNullOrEmpty(callbackQuery.Data))
             {
                 return;
             }
 
-            foreach (var command in _callbackCommands.Where(command => command.Contains(e.CallbackQuery)))
+            foreach (var command in _callbackCommands.Where(command => command.Contains(callbackQuery)))
             {
                 try
                 {
-                    await command.Execute(e.CallbackQuery);
                     Log.Logger.Information(
-                        $"{e.CallbackQuery.From} запросил callback команду {command.Triggers[0] ?? command.GetType().Name}");
+                        $"{callbackQuery.From} запросил callback команду {command.Triggers[0] ?? command.GetType().Name}");
+                    await command.Execute(callbackQuery);
                 }
                 catch (Exception ex)
                 {
@@ -131,7 +175,7 @@ namespace DevSilenceKeeperBot
              {
                  try
                  {
-                     StartPolling();
+                     StartPolling(cancellationToken);
                      while (!cancellationToken.IsCancellationRequested)
                      {
                          Thread.Sleep(TimeSpan.FromMinutes(1));
@@ -150,9 +194,11 @@ namespace DevSilenceKeeperBot
              }, cancellationToken);
         }
 
-        private void StartPolling()
+        private void StartPolling(CancellationToken cancellationToken)
         {
-            BotClient.StartReceiving();
+            BotClient.StartReceiving(
+                new DefaultUpdateHandler(HandleUpdateAsync, HandleErrorAsync),
+                cancellationToken);
             Log.Logger.Information("Бот начал обрабатывать сообщения...");
         }
 

@@ -30,6 +30,7 @@ namespace DevSilenceKeeperBot.Data
             optionsBuilder.UseMySql(Program.Configuration.GetConnectionString("MySql"));
         }
 
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             #region Many-To-Many Chats-PromotedMembers
