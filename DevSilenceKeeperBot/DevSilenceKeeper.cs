@@ -43,33 +43,41 @@ namespace DevSilenceKeeperBot
 
         private async void OnMessage(object sender, MessageEventArgs e)
         {
-            var message = e.Message;
-            if (string.IsNullOrEmpty(message.Text) && message.NewChatMembers == null)
+            if (string.IsNullOrEmpty(e.Message.Text) && e.Message.NewChatMembers == null)
             {
                 return;
             }
 
-            var chatAdmins = await BotClient.GetChatAdministratorsAsync(message.Chat.Id);
+            var chatAdmins = await BotClient.GetChatAdministratorsAsync(e.Message.Chat.Id);
             if (chatAdmins.All(admin => admin.User.Id != BotClient.BotId))
             {
                 return;
             }
 
-            foreach (var command in _commands.Where(command => command.Contains(message)))
+            foreach (var command in _commands.Where(command => command.Contains(e.Message)))
             {
                 if (command is ForbiddenWordCommand)
                 {
-                    Log.Logger.Information($"{message.From} нарушил правила чата: \"{message.Text}\"");
+                    Log.Logger.Information($"{e.Message.From} нарушил правила чата: \"{e.Message.Text}\"");
                 }
                 else
                 {
                     string commandIdentifier = command.Triggers != null
                         ? command.Triggers.First()
                         : command.GetType().Name;
-                    Log.Logger.Information($"{message.From} (@{message.Chat.Username}) запросил команду {commandIdentifier}: {message.Text}");
+                    Log.Logger.Information($"{e.Message.From} (@{e.Message.Chat.Username}) запросил команду {commandIdentifier}: {e.Message.Text}");
                 }
 
-                await command.Execute(message);
+                try
+                {
+                    await command.Execute(e.Message);
+                }
+                catch (Exception ex)
+                {
+                    string errorTemplate = $"Unpredictable error occured ({nameof(ex)}): {ex.Message}\n" +
+                                           $"Stack Trace: {ex.StackTrace}";
+                    Log.Error(ex, errorTemplate);
+                }
 
                 return;
             }
@@ -77,19 +85,24 @@ namespace DevSilenceKeeperBot
 
         private async void OnCallbackQuery(object sender, CallbackQueryEventArgs e)
         {
-            var callbackQuery = e.CallbackQuery;
-            if (string.IsNullOrEmpty(callbackQuery.Data))
+            if (string.IsNullOrEmpty(e.CallbackQuery.Data))
             {
                 return;
             }
 
-            foreach (var command in _callbackCommands.Where(command => command.Contains(callbackQuery)))
+            var chatAdmins = await BotClient.GetChatAdministratorsAsync(e.CallbackQuery.Message.Chat.Id);
+            if (chatAdmins.All(admin => admin.User.Id != BotClient.BotId))
+            {
+                return;
+            }
+
+            foreach (var command in _callbackCommands.Where(command => command.Contains(e.CallbackQuery)))
             {
                 try
                 {
                     Log.Logger.Information(
-                        $"{callbackQuery.From} запросил callback команду {command.Triggers[0] ?? command.GetType().Name}: {callbackQuery.Data}");
-                    await command.Execute(callbackQuery);
+                        $"{e.CallbackQuery.From} запросил callback команду {command.Triggers[0] ?? command.GetType().Name}: {e.CallbackQuery.Data}");
+                    await command.Execute(e.CallbackQuery);
                 }
                 catch (Exception ex)
                 {
