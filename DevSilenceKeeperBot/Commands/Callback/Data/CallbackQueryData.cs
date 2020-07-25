@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text;
 
 namespace DevSilenceKeeperBot.Commands.Callback.Data
 {
@@ -33,7 +34,21 @@ namespace DevSilenceKeeperBot.Commands.Callback.Data
 
         public override string ToString()
         {
-            return $"{UserId}:{Trigger}:{Arguments}";
+            var builder = new StringBuilder();
+            builder.Append(UserId);
+            builder.Append(':');
+            builder.Append(Trigger);
+
+            if (Arguments != null)
+            {
+                foreach (var argument in Arguments)
+                {
+                    builder.Append(':');
+                    builder.Append(argument);
+                }
+            }
+
+            return builder.ToString();
         }
     }
 }
