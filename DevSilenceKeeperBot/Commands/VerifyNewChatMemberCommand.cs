@@ -1,6 +1,7 @@
 ﻿using DevSilenceKeeperBot.Commands.Callback.Data;
 using DevSilenceKeeperBot.Extensions;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
@@ -31,6 +32,7 @@ namespace DevSilenceKeeperBot.Commands
 
         public override async Task Execute(Message message)
         {
+            var tasks = new List<Task>();
             foreach (var newChatMember in message.NewChatMembers)
             {
                 if (await newChatMember.IsMuted(message.Chat.Id))
@@ -54,11 +56,7 @@ namespace DevSilenceKeeperBot.Commands
                 var callbackData = new CallbackQueryData
                 {
                     UserId = newChatMember.Id,
-                    Trigger = "verified",
-                    Arguments = new[]
-                    {
-                        message.MessageId.ToString()
-                    }
+                    Trigger = "verified"
                 };
                 var captchaMarkup = new InlineKeyboardMarkup(
                     new[]
@@ -72,12 +70,13 @@ namespace DevSilenceKeeperBot.Commands
                     replyToMessageId: message.MessageId,
                     replyMarkup: captchaMarkup);
 
-                await Task.Run(async () =>
+                tasks.Add(Task.Run(async () =>
                 {
                     Thread.Sleep(_timeLimitForVerification);
                     try
                     {
-                        await DevSilenceKeeper.BotClient.DeleteMessageAsync(verifyMessage.Chat.Id, verifyMessage.MessageId);
+                        await DevSilenceKeeper.BotClient.DeleteMessageAsync(verifyMessage.Chat.Id,
+                            verifyMessage.MessageId);
                         await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                             message.Chat.Id,
                             $"{newChatMember} не прошел проверку на бота, за отведенное время ({_timeLimitForVerification.TotalSeconds} c.) и был кикнут из чата.",
@@ -89,8 +88,10 @@ namespace DevSilenceKeeperBot.Commands
                     {
                         // User complete verification, because can't delete not existing message
                     }
-                });
+                }));
             }
+
+            await Task.WhenAll(tasks.ToArray());
         }
     }
 }
