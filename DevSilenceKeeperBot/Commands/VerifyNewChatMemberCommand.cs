@@ -75,6 +75,15 @@ namespace DevSilenceKeeperBot.Commands
                     Thread.Sleep(_timeLimitForVerification);
                     try
                     {
+                        var member =
+                            await DevSilenceKeeper.BotClient.GetChatMemberAsync(message.Chat.Id, newChatMember.Id);
+
+                        // If somebody else give proved chat member
+                        if (member.CanSendMessages == true)
+                        {
+                            return;
+                        }
+
                         await DevSilenceKeeper.BotClient.DeleteMessageAsync(verifyMessage.Chat.Id,
                             verifyMessage.MessageId);
                         await DevSilenceKeeper.BotClient.SendTextMessageAsync(
