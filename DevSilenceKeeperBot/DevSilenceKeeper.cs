@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
+using Telegram.Bot.Types.Enums;
 
 namespace DevSilenceKeeperBot
 {
@@ -43,6 +44,15 @@ namespace DevSilenceKeeperBot
 
         private async void OnMessage(object sender, MessageEventArgs e)
         {
+            if (e.Message.Chat.Type != ChatType.Group || e.Message.Chat.Type != ChatType.Supergroup)
+            {
+                await DevSilenceKeeper.BotClient.SendTextMessageAsync(
+                    e.Message.Chat.Id,
+                    "Бот не работает вне груповых чатов.",
+                    replyToMessageId: e.Message.MessageId);
+                return;
+            }
+            
             if (string.IsNullOrEmpty(e.Message.Text) && e.Message.NewChatMembers == null)
             {
                 return;
