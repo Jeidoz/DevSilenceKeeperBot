@@ -137,10 +137,11 @@ namespace DevSilenceKeeperBot.Services
 
         public async Task RemovePromotedMemberAsync(long chatId, int memberId)
         {
+            var requestedChat = await GetChatById(chatId);
             var memberToRemove = await _context.ChatToPromotedMembers
                 .Include(c2pm => c2pm.PromotedChatMember)
                 .Include(c2pm => c2pm.Chat)
-                .SingleAsync(c2pm => c2pm.ChatId == chatId && c2pm.PromotedChatMember.UserId == memberId);
+                .SingleAsync(c2pm => c2pm.ChatId == requestedChat.Id && c2pm.PromotedChatMember.UserId == memberId);
             _context.ChatToPromotedMembers.Remove(memberToRemove);
             await _context.SaveChangesAsync();
         }
