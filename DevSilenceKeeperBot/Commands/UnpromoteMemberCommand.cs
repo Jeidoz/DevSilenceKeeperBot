@@ -31,7 +31,7 @@ namespace DevSilenceKeeperBot.Commands
                 return;
             }
 
-            if (string.IsNullOrEmpty(message.ReplyToMessage.Text))
+            if (message.ReplyToMessage is null)
             {
                 await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                     message.Chat.Id,

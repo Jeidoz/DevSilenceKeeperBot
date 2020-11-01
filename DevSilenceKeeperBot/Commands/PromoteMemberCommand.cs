@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using DevSilenceKeeperBot.Exceptions;
 using DevSilenceKeeperBot.Extensions;
 using DevSilenceKeeperBot.Services;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -36,7 +35,7 @@ namespace DevSilenceKeeperBot.Commands
                 return;
             }
 
-            if (string.IsNullOrEmpty(message.ReplyToMessage.Text))
+            if (message.ReplyToMessage is null)
             {
                 await DevSilenceKeeper.BotClient.SendTextMessageAsync(
                     message.Chat.Id,
@@ -70,7 +69,7 @@ namespace DevSilenceKeeperBot.Commands
             }
             catch (Exception ex)
             {
-                response = $"{usernameMarkup}, извини, я сломался\\. Пиши создателю\\.";
+                response = $"{usernameMarkup}, извини, я сломался. Пиши создателю.";
                 Log.Logger.Warning($"[{nameof(ex)}]: {ex.Message}\n{ex.StackTrace}");
             }
 
