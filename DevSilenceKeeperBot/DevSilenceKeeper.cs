@@ -44,9 +44,9 @@ namespace DevSilenceKeeperBot
 
         private async void OnMessage(object sender, MessageEventArgs e)
         {
-            if (e.Message.Chat.Type != ChatType.Group || e.Message.Chat.Type != ChatType.Supergroup)
+            if (!IsValidChatType(e.Message.Chat.Type))
             {
-                await DevSilenceKeeper.BotClient.SendTextMessageAsync(
+                await BotClient.SendTextMessageAsync(
                     e.Message.Chat.Id,
                     "Бот не работает вне груповых чатов.",
                     replyToMessageId: e.Message.MessageId);
@@ -91,6 +91,11 @@ namespace DevSilenceKeeperBot
 
                 return;
             }
+        }
+
+        private bool IsValidChatType(ChatType currentChatType)
+        {
+            return currentChatType == ChatType.Group || currentChatType == ChatType.Supergroup;
         }
 
         private async void OnCallbackQuery(object sender, CallbackQueryEventArgs e)
