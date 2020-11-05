@@ -12,12 +12,33 @@ This bot was written for @progeri_chat group in Telegram. Also, here I practiced
 - delete messages by promoted members or higher
 - ban and unban chat members by promoted members or higher
 
-## Prerequisites
+### Available bot commands
+- /help – show all commands.
+- /words (or /templates) – show forbidden(lead to kick) words/templates.
+- /add – (**admin only**) add forbidden word/template.
+- /remove (/rm) – (**admin only**) remove forbidden word/template.
+- /promote – (**promoted member or higher**) gives additional privilegies to chat member
+- /unpromote — (**promoted member or higher**) removed additional privilegies from chat member
+- /delete (/del) – (**promoted member or higher**) delete replied message
+- /users – show chat promoted members
+- /mute \[d.\]HH:mm\[:ss\] – (**promoted member or higher**) mute chat member
+- /unmute – (**promoted member or higher**) unmute chat member
+- /ban — (**promoted member or higher**) bans replied chat member
+- /unban — (**promoted member of higher**) unbans replied chat member
+
+### Try it!
+You can just add the existing chat-bot instance [@devsilencekeeper_bot](https://t.me/devsilencekeeper_bot) to your group and give admin rights to it.
+
+**OR**
+
+## Host your own chat-bot instance
+
+### Prerequisites
 - .NET Core 3.1 Runtime
 - Telegram chatbot's token (you can get it in [@BotFather](https://t.me/BotFather))
 - Existing MySQL database connection string
 
-## How to run
+### How to run your own bot
 1. Configure your bot settings in **appSettings.json**.
 ```
 {
@@ -36,25 +57,13 @@ This bot was written for @progeri_chat group in Telegram. Also, here I practiced
   ]
 }
 ```
-2. Make a chatbot an admin in the group (for ablity to kick members).
-3. Run the executable file.
+2. Run the executable file.
 ```
 dotnet run
 ```
+3. Add chatbot as admin to the your group!
 
-## Available bot commands
-- /help – show all commands.
-- /words (or /templates) – show forbidden(lead to kick) words/templates.
-- /add – (**admin only**) add forbidden word/template.
-- /remove (/rm) – (**admin only**) remove forbidden word/template.
-- /promote – (**promoted member or higher**) gives additional privilegies to chat member
-- /unpromote — (**promoted member or higher**) removed additional privilegies from chat member
-- /delete (/del) – (**promoted member or higher**) delete replied message
-- /users – show chat promoted members
-- /mute \[d.\]HH:mm\[:ss\] – (**promoted member or higher**) mute chat member
-- /unmute – (**promoted member or higher**) unmute chat member
-- /ban — (**promoted member or higher**) bans replied chat member
-- /unban — (**promoted member of higher**) unbans replied chat member
+
 
 ## Built with
 - [Telegram.Bot](https://github.com/TelegramBots/telegram.bot) – C# Wrapper of Telegram Bot API. 
