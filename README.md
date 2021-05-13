@@ -26,11 +26,6 @@ This bot was written for @progeri_chat group in Telegram. Also, here I practiced
 - /ban — (**promoted member or higher**) bans replied chat member
 - /unban — (**promoted member of higher**) unbans replied chat member
 
-### Try it!
-You can just add the existing chat-bot instance [@devsilencekeeper_bot](https://t.me/devsilencekeeper_bot) to your group and give admin rights to it.
-
-**OR**
-
 ## Host your own chat-bot instance
 
 ### Prerequisites
